@@ -1,0 +1,36 @@
+{
+  "name": "ca-practice-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CA Practice Operating System - multi-tenant SaaS for Chartered Accountant firms",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:api": "npm run start:dev --workspace apps/api",
+    "build:web": "npm run build --workspace apps/web",
+    "build:api": "npm run build --workspace apps/api",
+    "build": "npm run build:api && npm run build:web",
+    "lint:web": "npm run lint --workspace apps/web",
+    "lint:api": "npm run lint --workspace apps/api",
+    "test:api": "npm run test --workspace apps/api",
+    "prisma:generate": "npm run prisma:generate --workspace apps/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace apps/api",
+    "prisma:seed": "npm run prisma:seed --workspace apps/api",
+    "docker:up": "docker compose --env-file .env -f infra/docker-compose.yml up -d",
+    "docker:down": "docker compose --env-file .env -f infra/docker-compose.yml down"
+  },
+  "devDependencies": {},
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "argon2@0.41.1": true,
+    "esbuild@0.28.2": true,
+    "msgpackr-extract@3.0.4": true,
+    "prisma@6.19.3": true,
+    "unrs-resolver@1.12.2": true,
+    "@google/genai@2.19.0": true,
+    "protobufjs@7.6.6": true
+  }
+}

@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+coverage/
+
+# next.js
+apps/web/.next/
+apps/web/out/
+
+# nest / build output
+apps/api/dist/
+dist/
+
+# env files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+logs/
+
+# misc
+.DS_Store
+*.pem
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# prisma
+apps/api/prisma/*.db
+
+# uploads (local dev document storage - never commit real client files)
+apps/api/storage/
+uploads/
+
+# turbo/build cache
+.turbo/
