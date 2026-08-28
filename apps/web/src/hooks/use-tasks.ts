@@ -6,6 +6,7 @@ import type { TaskDetail, TaskListItem, TaskTemplate } from "@/lib/types/task";
 export interface TaskListFilters {
   status?: string;
   priority?: string;
+  category?: string;
   clientId?: string;
   assignedUserId?: string;
   overdue?: boolean;
@@ -51,6 +52,8 @@ export function useMyDay() {
           overdue: number;
           followUps: number;
           highPriority: number;
+          paymentTasks: number;
+          complianceDue: number;
           productivityPercent: number;
         };
       }>("/tasks/my-day"),

@@ -42,6 +42,7 @@ export interface ClientListItem {
   gstin: string | null;
   pan: string | null;
   assignedUser: { id: string; fullName: string } | null;
+  services: { category: ServiceCategory }[];
   _count: { services: number; tasks: number };
 }
 

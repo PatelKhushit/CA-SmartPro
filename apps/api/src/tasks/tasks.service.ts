@@ -283,8 +283,9 @@ export class TasksService {
     const overdueCount = tasks.filter((t) => t.dueDate && t.dueDate < startOfToday()).length;
     const highPriorityCount = tasks.filter((t) => t.priority === 'HIGH' || t.priority === 'URGENT').length;
     const followUpCount = tasks.filter((t) => t.category === 'FOLLOW_UP').length;
+    const paymentTaskCount = tasks.filter((t) => t.category === 'PAYMENT').length;
 
-    const [completedToday, totalActiveToday] = await Promise.all([
+    const [completedToday, totalActiveToday, complianceDueCount] = await Promise.all([
       this.prisma.task.count({
         where: {
           organizationId: user.organizationId,
@@ -304,6 +305,16 @@ export class TasksService {
           ],
         },
       }),
+      // Firm-wide, not just this user's assignments — compliance due-dates are
+      // a practice-level concern everyone on My Day should see, same as the
+      // Compliance Calendar itself.
+      this.prisma.complianceEvent.count({
+        where: {
+          organizationId: user.organizationId,
+          status: { in: ['UPCOMING', 'DUE', 'OVERDUE'] },
+          dueDate: { lte: endOfToday() },
+        },
+      }),
     ]);
 
     return {
@@ -316,6 +327,8 @@ export class TasksService {
         overdue: overdueCount,
         followUps: followUpCount,
         highPriority: highPriorityCount,
+        paymentTasks: paymentTaskCount,
+        complianceDue: complianceDueCount,
         productivityPercent: totalActiveToday === 0 ? 0 : Math.round((completedToday / totalActiveToday) * 100),
       },
     };

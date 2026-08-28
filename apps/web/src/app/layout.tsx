@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CA SmartPro",
-  description: "Manage Clients. Tasks. Compliance. Growth. — the practice operating system for Chartered Accountant firms.",
+  description: "Your Practice. Your Productivity. Your Growth. — the practice operating system for Chartered Accountant firms.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

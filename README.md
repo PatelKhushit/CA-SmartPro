@@ -1,6 +1,6 @@
 # CA SmartPro
 
-*Manage Clients. Tasks. Compliance. Growth.*
+*Your Practice. Your Productivity. Your Growth.*
 
 A multi-tenant Practice Operating System for Chartered Accountant firms in India — clients, recurring compliance work, "My Day" productivity, calendar, calculators, documents, and an AI Copilot, built on real CRUD (no mock data). Internal package/repo name remains `ca-practice-os`.
 

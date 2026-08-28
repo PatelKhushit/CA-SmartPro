@@ -1,9 +1,10 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings } from "lucide-react";
-import { NAV_ITEMS } from "@/lib/nav";
+import { ChevronDown, Settings } from "lucide-react";
+import { NAV_GROUPS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Logo } from "@/components/brand/logo";
@@ -17,36 +18,67 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const [collapsedGroups, setCollapsedGroups] = React.useState<Set<string>>(new Set());
+
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col bg-navy md:flex">
-      <div className="flex h-16 items-center px-5">
+    <aside className="hidden w-64 shrink-0 flex-col bg-navy md:flex">
+      <div className="flex h-16 shrink-0 items-center px-5">
         <Logo variant="on-dark" />
       </div>
-      <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
-        {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+      <nav className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-2">
+        {NAV_GROUPS.map((group) => {
+          const isCollapsed = collapsedGroups.has(group.label);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-brand-500 text-white"
-                  : "text-navy-muted hover:bg-navy-surface hover:text-navy-foreground",
+            <div key={group.label}>
+              <button
+                onClick={() => toggleGroup(group.label)}
+                className="flex w-full items-center justify-between px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-navy-muted hover:text-navy-foreground"
+              >
+                {group.label}
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isCollapsed && "-rotate-90")} />
+              </button>
+              {!isCollapsed && (
+                <div className="mt-1 flex flex-col gap-1">
+                  {group.items.map((item) => {
+                    const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          active
+                            ? "bg-brand-500 text-white"
+                            : "text-navy-muted hover:bg-navy-surface hover:text-navy-foreground",
+                        )}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                        {item.comingSoon && !active && (
+                          <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-navy-muted/60" title="Coming soon" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
+            </div>
           );
         })}
       </nav>
       {user && (
         <button
           onClick={() => router.push("/settings")}
-          className="flex items-center gap-3 border-t border-navy-border px-4 py-3 text-left transition-colors hover:bg-navy-surface"
+          className="flex shrink-0 items-center gap-3 border-t border-navy-border px-4 py-3 text-left transition-colors hover:bg-navy-surface"
         >
           <Avatar className="h-8 w-8">
             <AvatarFallback>{initials(user.fullName)}</AvatarFallback>

@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  /* CA SmartPro brand identity — Deep Navy (#01142A) for chrome/sidebar,
-     Royal Blue (#1565D8) as the primary action color, Professional Blue
-     (#2F80ED) as the secondary/info accent. Neutrals follow the Slate ramp
+  /* CA SmartPro brand identity — Deep Navy (#0D1B2A) for chrome/sidebar,
+     Primary Blue (#2563EB) as the primary action color, Accent Blue
+     (#3B82F6) for highlights/active states. Neutrals follow the Slate ramp
      specified in the brand summary so blue reads as the clear accent. */
   --background: #f8fafc;
   --surface: #ffffff;
@@ -11,23 +11,25 @@
   --muted: #64748b;
   --muted-surface: #f1f5f9;
   --border: #e2e8f0;
+  --disabled: #94a3b8;
 
   /* Navy — sidebar, header chrome, premium/dark surfaces */
-  --navy: #01142a;
-  --navy-surface: #0a2142;
-  --navy-border: #142d4d;
+  --navy: #0d1b2a;
+  --navy-surface: #16283c;
+  --navy-border: #22344a;
   --navy-foreground: #f4f7fb;
   --navy-muted: #93a3ba;
 
-  /* Brand — Royal Blue primary, Professional Blue secondary */
-  --brand-50: #eaf1fc;
-  --brand-100: #d3e3f9;
-  --brand-200: #a7c7f3;
-  --brand-400: #2f80ed;
-  --brand-500: #1565d8;
-  --brand-600: #0f52b3;
-  --brand-700: #0c3f8a;
-  --brand-900: #082756;
+  /* Brand — Primary Blue (buttons/links/main actions), Accent Blue
+     (focus rings, sidebar active state, highlights) */
+  --brand-50: #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-200: #bfdbfe;
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+  --brand-900: #1e3a8a;
 
   /* AI accent — used only for AI Copilot / AI-generated experiences */
   --ai-50: #f3edfc;
@@ -46,15 +48,15 @@
   /* Status system — used consistently everywhere, never ad-hoc colors */
   --status-completed: #16a34a;
   --status-completed-bg: #f0fdf4;
-  --status-in-progress: #1565d8;
-  --status-in-progress-bg: #eaf1fc;
+  --status-in-progress: #2563eb;
+  --status-in-progress-bg: #eff6ff;
   --status-upcoming: #64748b;
   --status-upcoming-bg: #f1f5f9;
   --status-attention: #f59e0b;
   --status-attention-bg: #fffbeb;
-  --status-overdue: #dc2626;
+  --status-overdue: #ef4444;
   --status-overdue-bg: #fef2f2;
-  --status-blocked: #991b1b;
+  --status-blocked: #b91c1c;
   --status-blocked-bg: #fef2f2;
   --status-cancelled: #6b7280;
   --status-cancelled-bg: #f3f4f6;
@@ -69,6 +71,7 @@
   --color-muted: var(--muted);
   --color-muted-surface: var(--muted-surface);
   --color-border: var(--border);
+  --color-disabled: var(--disabled);
 
   --color-navy: var(--navy);
   --color-navy-surface: var(--navy-surface);
@@ -118,27 +121,28 @@
     /* Deep Navy is the brand's own dark-mode surface color per the CA
        SmartPro identity — dark mode is a navy premium surface, not a
        generic neutral charcoal. */
-    --background: #01142a;
-    --surface: #0a1f3d;
+    --background: #0d1b2a;
+    --surface: #16283c;
     --foreground: #f4f7fb;
     --muted: #93a3ba;
-    --muted-surface: #10294a;
-    --border: #1c3860;
+    --muted-surface: #1a2c42;
+    --border: #26384e;
+    --disabled: #64748b;
 
-    --navy: #000c1a;
-    --navy-surface: #061630;
-    --navy-border: #10294a;
+    --navy: #070f18;
+    --navy-surface: #0f1d2e;
+    --navy-border: #1a2c42;
     --navy-foreground: #f4f7fb;
     --navy-muted: #8093ae;
 
-    --brand-50: #142c56;
-    --brand-100: #1a3868;
-    --brand-200: #204a8a;
-    --brand-400: #5b9bf0;
-    --brand-500: #4d8ef0;
-    --brand-600: #6ba5f5;
-    --brand-700: #93c0fa;
-    --brand-900: #d6e8ff;
+    --brand-50: #1e3a8a;
+    --brand-100: #1e40af;
+    --brand-200: #1d4ed8;
+    --brand-400: #60a5fa;
+    --brand-500: #3b82f6;
+    --brand-600: #93c5fd;
+    --brand-700: #bfdbfe;
+    --brand-900: #eff6ff;
 
     --ai-50: #241b3d;
     --ai-100: #33254f;
@@ -147,8 +151,8 @@
     --ai-700: #ddd6fe;
 
     --status-completed-bg: #113322;
-    --status-in-progress-bg: #142c56;
-    --status-upcoming-bg: #10294a;
+    --status-in-progress-bg: #1e3a8a;
+    --status-upcoming-bg: #1a2c42;
     --status-attention-bg: #3a2a0c;
     --status-overdue-bg: #3a1414;
     --status-blocked-bg: #3a1414;
@@ -189,26 +193,27 @@ body {
   --muted: #64748b;
   --muted-surface: #f1f5f9;
   --border: #e2e8f0;
+  --disabled: #94a3b8;
 
-  --brand-50: #eaf1fc;
-  --brand-100: #d3e3f9;
-  --brand-200: #a7c7f3;
-  --brand-400: #2f80ed;
-  --brand-500: #1565d8;
-  --brand-600: #0f52b3;
-  --brand-700: #0c3f8a;
-  --brand-900: #082756;
+  --brand-50: #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-200: #bfdbfe;
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+  --brand-900: #1e3a8a;
 
-  --status-overdue: #dc2626;
+  --status-overdue: #ef4444;
   --status-overdue-bg: #fef2f2;
 }
 
 .auth-gradient {
   background: linear-gradient(
     180deg,
-    #01142a 0px,
-    #01142a 60px,
-    #1565d8 220px,
+    #0d1b2a 0px,
+    #0d1b2a 60px,
+    #2563eb 220px,
     #16a34a 380px,
     #ffffff 520px,
     #f8fafc 640px,

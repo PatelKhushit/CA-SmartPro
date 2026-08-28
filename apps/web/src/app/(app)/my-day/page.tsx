@@ -3,7 +3,19 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Clock, Flame, Target } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  Flame,
+  ListChecks,
+  PhoneCall,
+  Receipt,
+  Target,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useMyDay } from "@/hooks/use-tasks";
 import { useGoals, useDeleteGoal } from "@/hooks/use-goals";
@@ -16,7 +28,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { NewGoalDialog, GOAL_TYPE_LABELS } from "@/components/my-day/new-goal-dialog";
 import { PRIORITY_MAP, effectiveTaskStatus } from "@/lib/status";
-import { X } from "lucide-react";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { RecentClientsCard } from "@/components/dashboard/recent-clients-card";
+import { AiCopilotCard } from "@/components/dashboard/ai-copilot-card";
+import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
 
 function todayKey() {
   const d = new Date();
@@ -31,7 +46,7 @@ function greeting(): string {
 }
 
 export default function MyDayPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { data, isLoading, isError, refetch } = useMyDay();
   const [started, setStarted] = React.useState(false);
 
@@ -73,29 +88,27 @@ export default function MyDayPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="border-brand-200/60 bg-brand-50/10">
-        <CardContent className="flex flex-col gap-4 pt-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">
-              {greeting()}, {firstName} 👋
-            </h1>
-            <p className="text-sm text-muted">{dateLabel}</p>
-          </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {greeting()}, {firstName} 👋
+          </h1>
+          <p className="text-sm text-muted">Here&apos;s what&apos;s happening in your practice today — {dateLabel}</p>
+        </div>
+        {!started && (
+          <Button size="lg" onClick={startMyDay} className="w-full sm:w-auto">
+            Start My Day <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Tasks today" value={data.counts.total} />
-            <Stat label="High priority" value={data.counts.highPriority} accent="attention" />
-            <Stat label="Follow-ups" value={data.counts.followUps} />
-            <Stat label="Overdue" value={data.counts.overdue} accent="overdue" />
-          </div>
-
-          {!started && (
-            <Button size="lg" onClick={startMyDay} className="mt-2 w-full sm:w-auto">
-              Start My Day <ArrowRight className="h-4 w-4" />
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <KpiCard icon={ListChecks} label="Tasks Today" value={data.counts.total} accent="info" />
+        <KpiCard icon={AlertTriangle} label="Overdue Tasks" value={data.counts.overdue} accent="overdue" />
+        <KpiCard icon={CalendarClock} label="Compliance Due" value={data.counts.complianceDue} accent="attention" />
+        <KpiCard icon={PhoneCall} label="Follow-ups" value={data.counts.followUps} accent="attention" />
+        <KpiCard icon={Receipt} label="Payment Tasks" value={data.counts.paymentTasks} accent="attention" />
+      </div>
 
       {started && (
         <>
@@ -129,6 +142,11 @@ export default function MyDayPage() {
                 <Progress value={data.counts.productivityPercent} />
               </CardContent>
             </Card>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <RecentClientsCard />
+            <AiCopilotCard />
           </div>
 
           <Card>
@@ -165,28 +183,11 @@ export default function MyDayPage() {
             </CardContent>
           </Card>
 
+          {hasPermission("settings.manage") && <RecentActivityCard />}
+
           <GoalsSection />
         </>
       )}
-    </div>
-  );
-}
-
-function Stat({ label, value, accent }: { label: string; value: number; accent?: "attention" | "overdue" }) {
-  return (
-    <div className="rounded-lg bg-surface/60 p-3">
-      <p
-        className={
-          accent === "overdue" && value > 0
-            ? "text-2xl font-semibold text-status-overdue"
-            : accent === "attention" && value > 0
-              ? "text-2xl font-semibold text-status-attention"
-              : "text-2xl font-semibold text-foreground"
-        }
-      >
-        {value}
-      </p>
-      <p className="text-xs text-muted">{label}</p>
     </div>
   );
 }

@@ -10,9 +10,9 @@ export interface AuditLogEntry {
   user: { fullName: string } | null;
 }
 
-export function useAuditLogs() {
+export function useAuditLogs(take?: number) {
   return useQuery({
-    queryKey: ["audit-logs"],
-    queryFn: () => api.get<AuditLogEntry[]>("/audit-logs"),
+    queryKey: ["audit-logs", take],
+    queryFn: () => api.get<AuditLogEntry[]>(`/audit-logs${take ? `?take=${take}` : ""}`),
   });
 }

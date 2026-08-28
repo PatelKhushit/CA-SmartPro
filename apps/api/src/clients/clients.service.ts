@@ -45,6 +45,7 @@ export class ClientsService {
         take: query.pageSize,
         include: {
           assignedUser: { select: { id: true, fullName: true } },
+          services: { select: { category: true }, take: 6, orderBy: { createdAt: 'desc' } },
           _count: { select: { services: true, tasks: true } },
         },
       }),

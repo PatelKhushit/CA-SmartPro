@@ -122,7 +122,7 @@ export default function ClientProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {["Tasks", "Compliance", "Payments", "Communication timeline", "AI summary"].map(
+                  {["Tasks", "Payments", "Communication timeline", "AI summary"].map(
                     (label) => (
                       <Badge key={label} variant="neutral">
                         {label} — Phase 2

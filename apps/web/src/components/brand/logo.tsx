@@ -12,7 +12,7 @@ interface LogoMarkProps {
  * the navy sidebar instead of disappearing into it.
  */
 export function LogoMark({ className, variant = "default" }: LogoMarkProps) {
-  const squareFill = variant === "on-dark" ? "#1565D8" : "#01142A";
+  const squareFill = variant === "on-dark" ? "#2563EB" : "#0D1B2A";
   return (
     <svg
       viewBox="0 0 32 32"

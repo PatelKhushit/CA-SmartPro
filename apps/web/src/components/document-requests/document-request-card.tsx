@@ -95,7 +95,7 @@ function ChecklistItemRow({ request, item }: { request: DocumentRequest; item: D
   );
 }
 
-export function DocumentRequestCard({ request }: { request: DocumentRequest }) {
+export function DocumentRequestCard({ request, showClient = false }: { request: DocumentRequest; showClient?: boolean }) {
   const { hasPermission } = useAuth();
   const cancelRequest = useCancelDocumentRequest();
 
@@ -115,7 +115,10 @@ export function DocumentRequestCard({ request }: { request: DocumentRequest }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle className="text-base">{request.title}</CardTitle>
+          <CardTitle className="text-base">
+            {request.title}
+            {showClient && <span className="ml-2 font-normal text-muted">· {request.client.displayName}</span>}
+          </CardTitle>
           <p className="mt-1 text-xs text-muted">
             {request.dueDate ? `Due ${format(new Date(request.dueDate), "d MMM yyyy")}` : "No due date"} · Requested by{" "}
             {request.createdBy.fullName}
