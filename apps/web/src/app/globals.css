@@ -36,6 +36,13 @@
   --ai-600: #5b21b6;
   --ai-700: #4c1d95;
 
+  /* CA Green — secondary brand accent, fixed regardless of theme. Reserved
+     for logo/brand-mark accents and financial-positive indicators (spec
+     section 2/70); distinct from --status-completed (Emerald), which is the
+     functional "done" status color. Not yet consumed by any UI — Payments/
+     Reports modules that would use it for "financial positive" aren't built. */
+  --ca-green: #00a651;
+
   /* Status system — used consistently everywhere, never ad-hoc colors */
   --status-completed: #16a34a;
   --status-completed-bg: #f0fdf4;
@@ -83,6 +90,8 @@
   --color-ai-500: var(--ai-500);
   --color-ai-600: var(--ai-600);
   --color-ai-700: var(--ai-700);
+
+  --color-ca-green: var(--ca-green);
 
   --color-status-completed: var(--status-completed);
   --color-status-completed-bg: var(--status-completed-bg);
