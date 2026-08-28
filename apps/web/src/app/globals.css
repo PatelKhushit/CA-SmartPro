@@ -165,3 +165,44 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Auth pages: a fixed brand-gradient "first impression" moment (navy → royal
+   blue → emerald → white → soft background), independent of the viewer's
+   light/dark preference. .auth-shell re-pins every themed CSS variable to
+   its light-mode value so Card/Button/Input etc. read correctly against the
+   gradient's white/soft-background lower half even under prefers-color-scheme:
+   dark — this is a deliberate one-off, not the app's normal dark-mode
+   behavior. */
+.auth-shell {
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --muted-surface: #f1f5f9;
+  --border: #e2e8f0;
+
+  --brand-50: #eaf1fc;
+  --brand-100: #d3e3f9;
+  --brand-200: #a7c7f3;
+  --brand-400: #2f80ed;
+  --brand-500: #1565d8;
+  --brand-600: #0f52b3;
+  --brand-700: #0c3f8a;
+  --brand-900: #082756;
+
+  --status-overdue: #dc2626;
+  --status-overdue-bg: #fef2f2;
+}
+
+.auth-gradient {
+  background: linear-gradient(
+    180deg,
+    #01142a 0px,
+    #01142a 60px,
+    #1565d8 220px,
+    #16a34a 380px,
+    #ffffff 520px,
+    #f8fafc 640px,
+    #f8fafc 100%
+  );
+}
