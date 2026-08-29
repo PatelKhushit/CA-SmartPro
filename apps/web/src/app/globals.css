@@ -116,48 +116,51 @@
   --radius-xl: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Deep Navy is the brand's own dark-mode surface color per the CA
-       SmartPro identity — dark mode is a navy premium surface, not a
-       generic neutral charcoal. */
-    --background: #0d1b2a;
-    --surface: #16283c;
-    --foreground: #f4f7fb;
-    --muted: #93a3ba;
-    --muted-surface: #1a2c42;
-    --border: #26384e;
-    --disabled: #64748b;
+/* Dark mode is opt-in, applied via [data-theme="dark"] on <html> — set by
+   the inline bootstrap script in app/layout.tsx (reads localStorage, falls
+   back to the OS preference on first visit only) and by ThemeToggle
+   afterwards. This keeps dark mode "available, not mandatory" (spec §47):
+   a user whose OS defaults to dark can still choose the white workspace. */
+:root[data-theme="dark"] {
+  /* Deep Navy is the brand's own dark-mode surface color per the CA
+     SmartPro identity — dark mode is a navy premium surface, not a
+     generic neutral charcoal. */
+  --background: #0d1b2a;
+  --surface: #16283c;
+  --foreground: #f4f7fb;
+  --muted: #93a3ba;
+  --muted-surface: #1a2c42;
+  --border: #26384e;
+  --disabled: #64748b;
 
-    --navy: #070f18;
-    --navy-surface: #0f1d2e;
-    --navy-border: #1a2c42;
-    --navy-foreground: #f4f7fb;
-    --navy-muted: #8093ae;
+  --navy: #070f18;
+  --navy-surface: #0f1d2e;
+  --navy-border: #1a2c42;
+  --navy-foreground: #f4f7fb;
+  --navy-muted: #8093ae;
 
-    --brand-50: #1e3a8a;
-    --brand-100: #1e40af;
-    --brand-200: #1d4ed8;
-    --brand-400: #60a5fa;
-    --brand-500: #3b82f6;
-    --brand-600: #93c5fd;
-    --brand-700: #bfdbfe;
-    --brand-900: #eff6ff;
+  --brand-50: #1e3a8a;
+  --brand-100: #1e40af;
+  --brand-200: #1d4ed8;
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #93c5fd;
+  --brand-700: #bfdbfe;
+  --brand-900: #eff6ff;
 
-    --ai-50: #241b3d;
-    --ai-100: #33254f;
-    --ai-500: #a78bfa;
-    --ai-600: #c4b5fd;
-    --ai-700: #ddd6fe;
+  --ai-50: #241b3d;
+  --ai-100: #33254f;
+  --ai-500: #a78bfa;
+  --ai-600: #c4b5fd;
+  --ai-700: #ddd6fe;
 
-    --status-completed-bg: #113322;
-    --status-in-progress-bg: #1e3a8a;
-    --status-upcoming-bg: #1a2c42;
-    --status-attention-bg: #3a2a0c;
-    --status-overdue-bg: #3a1414;
-    --status-blocked-bg: #3a1414;
-    --status-cancelled-bg: #1c2433;
-  }
+  --status-completed-bg: #113322;
+  --status-in-progress-bg: #1e3a8a;
+  --status-upcoming-bg: #1a2c42;
+  --status-attention-bg: #3a2a0c;
+  --status-overdue-bg: #3a1414;
+  --status-blocked-bg: #3a1414;
+  --status-cancelled-bg: #1c2433;
 }
 
 * {

@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "./theme-toggle";
 
 function initials(name: string) {
   return name
@@ -30,6 +31,7 @@ export function Topbar() {
   return (
     <header className="flex h-16 items-center gap-4 border-b border-border bg-surface px-4 md:px-6">
       <div className="flex-1" />
+      <ThemeToggle />
       <NotificationBell />
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
