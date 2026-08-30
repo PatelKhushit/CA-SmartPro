@@ -11,7 +11,9 @@ export default () => {
 
   return {
     nodeEnv: process.env.NODE_ENV ?? 'development',
-    port: parseInt(process.env.API_PORT ?? '4000', 10),
+    // Render (and most PaaS hosts) assign their own PORT for routing —
+    // that must win over the local-dev API_PORT default when present.
+    port: parseInt(process.env.PORT ?? process.env.API_PORT ?? '4000', 10),
     corsAllowedOrigins: (process.env.CORS_ALLOWED_ORIGINS ?? 'http://localhost:3000')
       .split(',')
       .map((origin) => origin.trim())
