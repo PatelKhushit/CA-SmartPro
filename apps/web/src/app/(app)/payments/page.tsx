@@ -1,3 +1,5 @@
+"use client";
+
 import { Wallet } from "lucide-react";
 import { ComingSoonPage } from "@/components/layout/coming-soon-page";
 

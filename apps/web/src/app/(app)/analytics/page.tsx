@@ -1,3 +1,5 @@
+"use client";
+
 import { TrendingUp } from "lucide-react";
 import { ComingSoonPage } from "@/components/layout/coming-soon-page";
 
