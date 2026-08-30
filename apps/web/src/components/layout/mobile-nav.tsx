@@ -13,11 +13,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export function MobileNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const primary = NAV_ITEMS.filter((item) => item.primaryMobile);
   const more = NAV_ITEMS.filter((item) => !item.primaryMobile);
 
@@ -35,7 +37,7 @@ export function MobileNav() {
             )}
           >
             <item.icon className="h-5 w-5" />
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         );
       })}
@@ -48,12 +50,12 @@ export function MobileNav() {
           {more.map((item) => (
             <DropdownMenuItem key={item.href} onSelect={() => router.push(item.href)}>
               <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => void logout()} className="text-status-overdue">
-            <LogOut className="mr-2 h-4 w-4" /> Sign out
+            <LogOut className="mr-2 h-4 w-4" /> {t("topbar.signOut")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

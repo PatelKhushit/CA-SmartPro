@@ -20,6 +20,7 @@ import {
 import { SERVICE_CATEGORY_LABELS } from "@/lib/types/client";
 import { useAuth } from "@/lib/auth-context";
 import { ApiClientError } from "@/lib/api-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 const STATUS_VARIANT = {
   UPCOMING: "upcoming",
@@ -39,6 +40,7 @@ const STATUS_TABS: { value: ComplianceEventStatus | "ALL"; label: string }[] = [
 
 export default function CompliancePage() {
   const { hasPermission } = useAuth();
+  const { t } = useLanguage();
   const [status, setStatus] = React.useState<ComplianceEventStatus | "ALL">("ALL");
   const { data, isLoading, isError, refetch } = useComplianceEvents(status === "ALL" ? {} : { status });
   const completeEvent = useCompleteComplianceEvent();
@@ -65,7 +67,7 @@ export default function CompliancePage() {
   if (!hasPermission("compliance.manage")) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold text-foreground">Compliance</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("pages.compliance.title")}</h1>
         <EmptyState
           icon={CalendarClock}
           title="You don't have access to Compliance."
@@ -78,9 +80,10 @@ export default function CompliancePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Compliance</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("pages.compliance.title")}</h1>
         <p className="text-sm text-muted">
-          Every GST/TDS/Income Tax/Audit/ROC compliance item across your clients. Rules are configured under{" "}
+          {t("pages.compliance.description")}{" "}
+          Rules are configured under{" "}
           <Link href="/settings" className="text-brand-600 hover:underline">
             Settings → Compliance rules
           </Link>

@@ -10,9 +10,11 @@ import {
   ClipboardList,
   FileText,
   Home,
+  LayoutGrid,
   Landmark,
   Mic,
   MessageSquare,
+  Newspaper,
   Percent,
   PhoneCall,
   Receipt,
@@ -29,6 +31,8 @@ import {
 
 export interface NavItem {
   label: string;
+  /** Dot-path into the nav.items dictionary namespace — falls back to `label` (English) if missing. */
+  labelKey: string;
   href: string;
   icon: LucideIcon;
   /** Shown in the primary mobile bottom bar (max 4, "More" covers the rest). */
@@ -39,59 +43,68 @@ export interface NavItem {
 
 export interface NavGroup {
   label: string;
+  /** Dot-path into the nav.groups dictionary namespace — falls back to `label` (English) if missing. */
+  labelKey: string;
   items: NavItem[];
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Main",
+    labelKey: "nav.groups.main",
     items: [
-      { label: "My Day", href: "/my-day", icon: Home, primaryMobile: true },
-      { label: "Clients", href: "/clients", icon: Users, primaryMobile: true },
-      { label: "Tasks", href: "/tasks", icon: ListChecks, primaryMobile: true },
-      { label: "Compliance", href: "/compliance", icon: ShieldCheck },
-      { label: "Calendar", href: "/calendar", icon: CalendarDays, primaryMobile: true },
+      { label: "My Day", labelKey: "nav.items.myDay", href: "/my-day", icon: Home, primaryMobile: true },
+      { label: "Clients", labelKey: "nav.items.clients", href: "/clients", icon: Users, primaryMobile: true },
+      { label: "Tasks", labelKey: "nav.items.tasks", href: "/tasks", icon: ListChecks, primaryMobile: true },
+      { label: "Compliance", labelKey: "nav.items.compliance", href: "/compliance", icon: ShieldCheck },
+      { label: "Calendar", labelKey: "nav.items.calendar", href: "/calendar", icon: CalendarDays, primaryMobile: true },
     ],
   },
   {
     label: "Work",
+    labelKey: "nav.groups.work",
     items: [
-      { label: "Documents", href: "/documents", icon: FileText },
-      { label: "Document Requests", href: "/document-requests", icon: ClipboardList },
-      { label: "Follow-ups", href: "/follow-ups", icon: PhoneCall },
-      { label: "Communication", href: "/communication", icon: MessageSquare, comingSoon: true },
-      { label: "Payments", href: "/payments", icon: Wallet, comingSoon: true },
-      { label: "Invoices", href: "/invoices", icon: Receipt, comingSoon: true },
-      { label: "Calculator", href: "/calculator", icon: Calculator },
+      { label: "Documents", labelKey: "nav.items.documents", href: "/documents", icon: FileText },
+      { label: "Document Requests", labelKey: "nav.items.documentRequests", href: "/document-requests", icon: ClipboardList },
+      { label: "Follow-ups", labelKey: "nav.items.followUps", href: "/follow-ups", icon: PhoneCall },
+      { label: "Communication", labelKey: "nav.items.communication", href: "/communication", icon: MessageSquare, comingSoon: true },
+      { label: "Payments", labelKey: "nav.items.payments", href: "/payments", icon: Wallet, comingSoon: true },
+      { label: "Invoices", labelKey: "nav.items.invoices", href: "/invoices", icon: Receipt, comingSoon: true },
+      { label: "Calculator", labelKey: "nav.items.calculator", href: "/calculator", icon: Calculator },
     ],
   },
   {
     label: "Tax & Compliance",
+    labelKey: "nav.groups.taxCompliance",
     items: [
-      { label: "GST", href: "/gst", icon: Percent, comingSoon: true },
-      { label: "TDS", href: "/tds", icon: Percent, comingSoon: true },
-      { label: "Income Tax", href: "/income-tax", icon: Landmark, comingSoon: true },
-      { label: "Audit", href: "/audit", icon: ClipboardCheck, comingSoon: true },
-      { label: "ROC / MCA", href: "/roc-mca", icon: Building2, comingSoon: true },
-      { label: "UDIN", href: "/udin", icon: BadgeCheck, comingSoon: true },
-      { label: "Notices", href: "/notices", icon: AlertOctagon, comingSoon: true },
+      { label: "Overview", labelKey: "nav.items.overview", href: "/tax-compliance", icon: LayoutGrid },
+      { label: "GST", labelKey: "nav.items.gst", href: "/gst", icon: Percent },
+      { label: "TDS", labelKey: "nav.items.tds", href: "/tds", icon: Percent },
+      { label: "Income Tax", labelKey: "nav.items.incomeTax", href: "/income-tax", icon: Landmark, comingSoon: true },
+      { label: "Audit", labelKey: "nav.items.audit", href: "/audit", icon: ClipboardCheck, comingSoon: true },
+      { label: "ROC / MCA", labelKey: "nav.items.rocMca", href: "/roc-mca", icon: Building2, comingSoon: true },
+      { label: "UDIN", labelKey: "nav.items.udin", href: "/udin", icon: BadgeCheck },
+      { label: "Notices", labelKey: "nav.items.notices", href: "/notices", icon: AlertOctagon },
     ],
   },
   {
     label: "Intelligence",
+    labelKey: "nav.groups.intelligence",
     items: [
-      { label: "AI Copilot", href: "/copilot", icon: Sparkles },
-      { label: "Voice Assistant", href: "/voice", icon: Mic, comingSoon: true },
-      { label: "Reports", href: "/reports", icon: BarChart3 },
-      { label: "Analytics", href: "/analytics", icon: TrendingUp, comingSoon: true },
+      { label: "AI Copilot", labelKey: "nav.items.aiCopilot", href: "/copilot", icon: Sparkles },
+      { label: "Voice Assistant", labelKey: "nav.items.voiceAssistant", href: "/voice", icon: Mic },
+      { label: "Reports", labelKey: "nav.items.reports", href: "/reports", icon: BarChart3 },
+      { label: "Analytics", labelKey: "nav.items.analytics", href: "/analytics", icon: TrendingUp, comingSoon: true },
+      { label: "News", labelKey: "nav.items.news", href: "/news", icon: Newspaper },
     ],
   },
   {
     label: "Admin",
+    labelKey: "nav.groups.admin",
     items: [
-      { label: "Team", href: "/team", icon: UserCog, comingSoon: true },
-      { label: "Automations", href: "/automations", icon: Workflow, comingSoon: true },
-      { label: "Settings", href: "/settings", icon: Settings },
+      { label: "Team", labelKey: "nav.items.team", href: "/team", icon: UserCog },
+      { label: "Automations", labelKey: "nav.items.automations", href: "/automations", icon: Workflow },
+      { label: "Settings", labelKey: "nav.items.settings", href: "/settings", icon: Settings },
     ],
   },
 ];

@@ -47,6 +47,16 @@ model Organization {
   documents         Document[]
   documentVersions  DocumentVersion[]
   documentRequests  DocumentRequest[]
+  notices              Notice[]
+  udinRecords          UDINRecord[]
+  gstProfiles          GSTProfile[]
+  gstReturns           GSTReturn[]
+  tdsProfiles          TDSProfile[]
+  tdsReturns           TDSReturn[]
+  tdsChallans          TDSChallan[]
+  tdsCertificates      TDSCertificate[]
+  automationRules      AutomationRule[]
+  automationExecutions AutomationExecution[]
 
   @@map("organizations")
 }
@@ -95,6 +105,18 @@ model User {
   uploadedDocuments         Document[]                @relation("DocumentUploadedBy")
   uploadedDocumentVersions  DocumentVersion[]          @relation("DocumentVersionUploadedBy")
   createdDocumentRequests   DocumentRequest[]          @relation("DocumentRequestCreatedBy")
+  assignedNotices           Notice[]                  @relation("NoticeAssignedUser")
+  createdNotices            Notice[]                  @relation("NoticeCreatedBy")
+  noticeComments            NoticeComment[]
+  assignedUdinRecords       UDINRecord[]               @relation("UdinAssignedUser")
+  createdUdinRecords        UDINRecord[]               @relation("UdinCreatedBy")
+  assignedGstReturns        GSTReturn[]                @relation("GstReturnAssignedUser")
+  createdGstReturns         GSTReturn[]                @relation("GstReturnCreatedBy")
+  assignedTdsReturns        TDSReturn[]                @relation("TdsReturnAssignedUser")
+  createdTdsReturns         TDSReturn[]                @relation("TdsReturnCreatedBy")
+  createdTdsChallans        TDSChallan[]               @relation("TdsChallanCreatedBy")
+  createdTdsCertificates    TDSCertificate[]           @relation("TdsCertificateCreatedBy")
+  createdAutomationRules    AutomationRule[]
 
   @@index([organizationId])
   @@map("users")
@@ -229,6 +251,14 @@ model Client {
   calendarEvents   CalendarEvent[]
   documents        Document[]
   documentRequests DocumentRequest[]
+  notices          Notice[]
+  udinRecords      UDINRecord[]
+  gstProfiles      GSTProfile[]
+  gstReturns       GSTReturn[]
+  tdsProfiles      TDSProfile[]
+  tdsReturns       TDSReturn[]
+  tdsChallans      TDSChallan[]
+  tdsCertificates  TDSCertificate[]
 
   @@unique([organizationId, clientCode])
   @@unique([organizationId, pan])
@@ -380,6 +410,7 @@ model Task {
   recurrencePeriodKey String?      // e.g. "2026-08" / "2026-Q3" / "2026" — dedupe key for recurring generation
   reminderConfig     Json          @default("[]")
   rescheduledFromId  String?
+  noticeId           String?       // many tasks can originate from one notice over its lifecycle
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   completedAt        DateTime?
@@ -392,16 +423,20 @@ model Task {
   createdBy    User          @relation("TaskCreatedBy", fields: [createdByUserId], references: [id])
   rescheduledFrom Task?      @relation("TaskReschedule", fields: [rescheduledFromId], references: [id])
   rescheduledTo   Task[]     @relation("TaskReschedule")
+  notice          Notice?    @relation(fields: [noticeId], references: [id])
 
   checklistItems   TaskChecklistItem[]
   comments         TaskComment[]
   assignmentEvents TaskAssignment[]
   complianceEvent  ComplianceEvent?
+  gstReturn        GSTReturn?
+  tdsReturn        TDSReturn?
 
   @@unique([organizationId, templateId, clientId, recurrencePeriodKey])
   @@index([organizationId, assignedUserId, status, dueDate])
   @@index([organizationId, clientId])
   @@index([organizationId, dueDate])
+  @@index([organizationId, noticeId])
   @@map("tasks")
 }
 
@@ -566,6 +601,9 @@ model CalendarEvent {
 enum ReminderEntityType {
   TASK
   COMPLIANCE_EVENT
+  NOTICE
+  GST_RETURN
+  TDS_RETURN
 }
 
 enum ReminderChannel {
@@ -697,6 +735,11 @@ enum AiMessageRole {
   TOOL
 }
 
+enum AiMessageSource {
+  TEXT
+  VOICE
+}
+
 model AiConversation {
   id             String   @id @default(cuid())
   organizationId String
@@ -714,14 +757,15 @@ model AiConversation {
 }
 
 model AiMessage {
-  id             String        @id @default(cuid())
+  id             String           @id @default(cuid())
   conversationId String
   role           AiMessageRole
   content        String
   toolName       String?
   toolInput      Json?
   toolOutput     Json?
-  createdAt      DateTime      @default(now())
+  source         AiMessageSource  @default(TEXT)
+  createdAt      DateTime         @default(now())
 
   conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -774,6 +818,7 @@ model Document {
 
   versions      DocumentVersion[]
   requestItems  DocumentRequestItem[]
+  noticeLinks   NoticeDocument[]
 
   @@index([organizationId, clientId, status])
   @@index([organizationId, category])
@@ -856,6 +901,395 @@ model DocumentRequestItem {
   @@index([documentRequestId])
   @@index([organizationId])
   @@map("document_request_items")
+}
+
+// ---------------------------------------------------------------------------
+// Notices (Notice Center — full lifecycle, section 8/33 of the product spec)
+// ---------------------------------------------------------------------------
+
+enum NoticeStatus {
+  NEW
+  UNDER_REVIEW
+  DRAFTING
+  WAITING_FOR_CLIENT
+  READY_TO_SUBMIT
+  SUBMITTED
+  CLOSED
+  OVERDUE
+}
+
+model Notice {
+  id               String        @id @default(cuid())
+  organizationId   String
+  clientId         String
+  department       ServiceCategory @default(OTHER)
+  noticeType       String
+  referenceNumber  String
+  noticeDate       DateTime
+  responseDeadline DateTime?
+  assignedUserId   String?
+  priority         TaskPriority  @default(MEDIUM)
+  status           NoticeStatus  @default(NEW)
+  description      String?
+  createdByUserId  String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  closedAt         DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedUser User?        @relation("NoticeAssignedUser", fields: [assignedUserId], references: [id])
+  createdBy    User         @relation("NoticeCreatedBy", fields: [createdByUserId], references: [id])
+
+  comments  NoticeComment[]
+  documents NoticeDocument[]
+  tasks     Task[]
+
+  @@index([organizationId, clientId, status])
+  @@index([organizationId, status, responseDeadline])
+  @@map("notices")
+}
+
+model NoticeComment {
+  id             String   @id @default(cuid())
+  noticeId       String
+  organizationId String
+  userId         String
+  body           String
+  createdAt      DateTime @default(now())
+
+  notice Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([noticeId])
+  @@map("notice_comments")
+}
+
+/** Links an already-uploaded Document to a Notice (many-to-many via join row, mirrors DocumentRequestItem's linking style). */
+model NoticeDocument {
+  id             String   @id @default(cuid())
+  noticeId       String
+  organizationId String
+  documentId     String
+  createdAt      DateTime @default(now())
+
+  notice   Notice   @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeId, documentId])
+  @@index([organizationId])
+  @@map("notice_documents")
+}
+
+// ---------------------------------------------------------------------------
+// UDIN (manual entry only — the actual UDIN is generated by the CA on the
+// ICAI portal; this module never synthesizes or invents a UDIN number)
+// ---------------------------------------------------------------------------
+
+enum UDINDocumentType {
+  CERTIFICATE
+  AUDIT_REPORT
+  GST_AUDIT
+  INCOME_TAX_AUDIT
+  REPORT
+  OTHER
+}
+
+enum UDINStatus {
+  PENDING
+  GENERATED
+  VERIFIED
+  EXPIRED
+}
+
+model UDINRecord {
+  id              String           @id @default(cuid())
+  organizationId  String
+  clientId        String
+  documentType    UDINDocumentType @default(OTHER)
+  documentDate    DateTime
+  description     String?
+  udinNumber      String?
+  generatedDate   DateTime?
+  status          UDINStatus       @default(PENDING)
+  assignedUserId  String?
+  notes           String?
+  createdByUserId String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedUser User?        @relation("UdinAssignedUser", fields: [assignedUserId], references: [id])
+  createdBy    User         @relation("UdinCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@unique([organizationId, udinNumber])
+  @@index([organizationId, clientId, status])
+  @@map("udin_records")
+}
+
+// ---------------------------------------------------------------------------
+// GST / TDS tax workflows. Shared ComplianceWorkStatus keeps GST and TDS
+// return tracking consistent; both are separate from the generic
+// ComplianceRule/ComplianceEvent engine (those model statutory due-date
+// generation, these model the actual per-return filing workflow + who's
+// working on it).
+// ---------------------------------------------------------------------------
+
+enum ComplianceWorkStatus {
+  UPCOMING
+  DUE_TODAY
+  SUBMITTED
+  COMPLETED
+  OVERDUE
+  WAITING_FOR_CLIENT
+  NOT_APPLICABLE
+}
+
+enum GstReturnType {
+  GSTR1
+  GSTR3B
+  GSTR9
+  GSTR9C
+  CMP08
+  OTHER
+}
+
+model GSTProfile {
+  id             String   @id @default(cuid())
+  organizationId String
+  clientId       String
+  gstin          String
+  tradeName      String?
+  state          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  returns      GSTReturn[]
+
+  @@unique([organizationId, gstin])
+  @@index([organizationId, clientId])
+  @@map("gst_profiles")
+}
+
+model GSTReturn {
+  id              String               @id @default(cuid())
+  organizationId  String
+  gstProfileId    String
+  clientId        String
+  returnType      GstReturnType
+  taxPeriod       String               // e.g. "2026-08"
+  dueDate         DateTime
+  status          ComplianceWorkStatus @default(UPCOMING)
+  assignedUserId  String?
+  taskId          String?              @unique
+  notes           String?
+  createdByUserId String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  completedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  gstProfile   GSTProfile   @relation(fields: [gstProfileId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedUser User?        @relation("GstReturnAssignedUser", fields: [assignedUserId], references: [id])
+  createdBy    User         @relation("GstReturnCreatedBy", fields: [createdByUserId], references: [id])
+  task         Task?        @relation(fields: [taskId], references: [id])
+
+  @@unique([organizationId, gstProfileId, returnType, taxPeriod])
+  @@index([organizationId, clientId, status])
+  @@index([organizationId, dueDate, status])
+  @@map("gst_returns")
+}
+
+enum TdsReturnType {
+  FORM_24Q
+  FORM_26Q
+  FORM_27Q
+  FORM_27EQ
+}
+
+enum TdsChallanStatus {
+  PENDING
+  PAID
+}
+
+enum TdsCertificateType {
+  FORM_16
+  FORM_16A
+  FORM_27D
+}
+
+enum TdsCertificateStatus {
+  PENDING
+  ISSUED
+}
+
+model TDSProfile {
+  id             String   @id @default(cuid())
+  organizationId String
+  clientId       String
+  tan            String
+  deductorType   String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  returns      TDSReturn[]
+  challans     TDSChallan[]
+  certificates TDSCertificate[]
+
+  @@unique([organizationId, tan])
+  @@index([organizationId, clientId])
+  @@map("tds_profiles")
+}
+
+model TDSReturn {
+  id              String               @id @default(cuid())
+  organizationId  String
+  tdsProfileId    String
+  clientId        String
+  returnType      TdsReturnType
+  quarter         String               // e.g. "Q1-2026-27"
+  dueDate         DateTime
+  status          ComplianceWorkStatus @default(UPCOMING)
+  assignedUserId  String?
+  taskId          String?              @unique
+  notes           String?
+  createdByUserId String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  completedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tdsProfile   TDSProfile   @relation(fields: [tdsProfileId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedUser User?        @relation("TdsReturnAssignedUser", fields: [assignedUserId], references: [id])
+  createdBy    User         @relation("TdsReturnCreatedBy", fields: [createdByUserId], references: [id])
+  task         Task?        @relation(fields: [taskId], references: [id])
+
+  @@unique([organizationId, tdsProfileId, returnType, quarter])
+  @@index([organizationId, clientId, status])
+  @@index([organizationId, dueDate, status])
+  @@map("tds_returns")
+}
+
+model TDSChallan {
+  id              String           @id @default(cuid())
+  organizationId  String
+  tdsProfileId    String
+  clientId        String
+  challanNumber   String
+  amount          Decimal          @db.Decimal(12, 2)
+  paymentDate     DateTime?
+  section         String?
+  status          TdsChallanStatus @default(PENDING)
+  createdByUserId String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tdsProfile   TDSProfile   @relation(fields: [tdsProfileId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("TdsChallanCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@index([organizationId, clientId, status])
+  @@map("tds_challans")
+}
+
+model TDSCertificate {
+  id              String               @id @default(cuid())
+  organizationId  String
+  tdsProfileId    String
+  clientId        String
+  certificateType TdsCertificateType
+  quarter         String
+  status          TdsCertificateStatus @default(PENDING)
+  issuedDate      DateTime?
+  createdByUserId String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tdsProfile   TDSProfile   @relation(fields: [tdsProfileId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("TdsCertificateCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@unique([organizationId, tdsProfileId, certificateType, quarter])
+  @@index([organizationId, clientId, status])
+  @@map("tds_certificates")
+}
+
+// ---------------------------------------------------------------------------
+// Automations (real trigger evaluation via the existing @nestjs/schedule cron
+// infrastructure — see apps/api/src/automations. Actions are limited to what
+// this system can actually do today: in-app notifications and task creation.
+// Email/WhatsApp action types exist in the schema/UI for forward-compat but
+// are rejected at execution time until a provider is wired — never faked.)
+// ---------------------------------------------------------------------------
+
+enum AutomationTriggerType {
+  TASK_OVERDUE
+  COMPLIANCE_DUE_SOON
+  DOCUMENT_REQUEST_OVERDUE
+}
+
+enum AutomationExecutionStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+  WAITING
+  CANCELLED
+}
+
+model AutomationRule {
+  id              String                @id @default(cuid())
+  organizationId  String
+  name            String
+  description     String?
+  triggerType     AutomationTriggerType
+  triggerConfig   Json                  @default("{}")
+  conditions      Json                  @default("[]")
+  actions         Json                  @default("[]")
+  isEnabled       Boolean               @default(true)
+  createdByUserId String
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  lastRunAt       DateTime?
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User                  @relation(fields: [createdByUserId], references: [id])
+  executions   AutomationExecution[]
+
+  @@index([organizationId, isEnabled, triggerType])
+  @@map("automation_rules")
+}
+
+/** One row per (rule, triggering entity) — the unique constraint IS the idempotency/duplicate-protection mechanism: a rule can fire at most once per entity, ever. */
+model AutomationExecution {
+  id                String                    @id @default(cuid())
+  organizationId    String
+  automationRuleId  String
+  triggerEntityType String
+  triggerEntityId   String
+  clientId          String?
+  status            AutomationExecutionStatus @default(WAITING)
+  actionsSummary    Json                      @default("[]")
+  error             String?
+  triggeredAt       DateTime                  @default(now())
+  completedAt       DateTime?
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  automationRule AutomationRule @relation(fields: [automationRuleId], references: [id], onDelete: Cascade)
+
+  @@unique([automationRuleId, triggerEntityType, triggerEntityId])
+  @@index([organizationId, status])
+  @@map("automation_executions")
 }
 
 // ---------------------------------------------------------------------------

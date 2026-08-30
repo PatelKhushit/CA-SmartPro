@@ -12,6 +12,7 @@ import { NewEventDialog } from "@/components/calendar/new-event-dialog";
 import { useCalendarRange, type CalendarItem } from "@/hooks/use-calendar";
 import { COMPLIANCE_STATUS_MAP, effectiveTaskStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { CalendarDays } from "lucide-react";
 
 const TYPE_LABELS: Record<CalendarItem["sourceType"], string> = {
@@ -33,6 +34,7 @@ function sameDay(a: Date, b: Date) {
 }
 
 export default function CalendarPage() {
+  const { t } = useLanguage();
   const [cursor, setCursor] = React.useState(() => new Date());
   const [selectedDay, setSelectedDay] = React.useState<Date | null>(null);
   const [typeFilter, setTypeFilter] = React.useState<CalendarItem["sourceType"] | "ALL">("ALL");
@@ -79,8 +81,8 @@ export default function CalendarPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Calendar</h1>
-          <p className="text-sm text-muted">Compliance deadlines, task due dates, and meetings — one view.</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("pages.calendar.title")}</h1>
+          <p className="text-sm text-muted">{t("pages.calendar.description")}</p>
         </div>
         <NewEventDialog defaultDate={selectedDay ?? undefined} />
       </div>

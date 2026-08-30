@@ -16,6 +16,7 @@ import {
   useSendAiMessage,
 } from "@/hooks/use-ai";
 import { ApiClientError } from "@/lib/api-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { toast } from "sonner";
 
 const SUGGESTIONS = [
@@ -26,6 +27,7 @@ const SUGGESTIONS = [
 ];
 
 export default function CopilotPage() {
+  const { t } = useLanguage();
   const { data: status } = useAiStatus();
   const { data: conversations } = useAiConversations();
   const [selectedId, setActiveId] = React.useState<string | undefined>(undefined);
@@ -55,7 +57,7 @@ export default function CopilotPage() {
     }
     setInput("");
     try {
-      await sendMessage.mutateAsync(text.trim());
+      await sendMessage.mutateAsync({ text: text.trim() });
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : "We couldn't reach the AI Copilot. Please try again.");
     }
@@ -84,7 +86,7 @@ export default function CopilotPage() {
       <div className="flex flex-1 flex-col">
         <div className="mb-3 flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-ai-500" />
-          <h1 className="text-xl font-semibold text-foreground">CA Copilot</h1>
+          <h1 className="text-xl font-semibold text-foreground">{t("pages.copilot.title")}</h1>
         </div>
 
         {status && !status.configured && (

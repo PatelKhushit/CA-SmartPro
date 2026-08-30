@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "./theme-toggle";
+import { LanguageSwitcher } from "./language-switcher";
 
 function initials(name: string) {
   return name
@@ -26,11 +28,13 @@ function initials(name: string) {
 
 export function Topbar() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   return (
     <header className="flex h-16 items-center gap-4 border-b border-border bg-surface px-4 md:px-6">
       <div className="flex-1" />
+      <LanguageSwitcher />
       <ThemeToggle />
       <NotificationBell />
       <DropdownMenu>
@@ -45,9 +49,9 @@ export function Topbar() {
             <p className="text-xs text-muted">{user?.role.name}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => router.push("/settings")}>Firm settings</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => router.push("/settings")}>{t("topbar.firmSettings")}</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => void logout()} className="text-status-overdue">
-            <LogOut className="mr-2 h-4 w-4" /> Sign out
+            <LogOut className="mr-2 h-4 w-4" /> {t("topbar.signOut")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

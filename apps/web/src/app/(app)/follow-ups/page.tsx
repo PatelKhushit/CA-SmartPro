@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useTasks } from "@/hooks/use-tasks";
 import { PRIORITY_MAP, effectiveTaskStatus } from "@/lib/status";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 function formatDueDate(dueDate: string | null) {
   if (!dueDate) return "No due date";
@@ -21,13 +22,14 @@ function formatDueDate(dueDate: string | null) {
  * API filtered to that category rather than a separate parallel system.
  */
 export default function FollowUpsPage() {
+  const { t } = useLanguage();
   const { data, isLoading, isError, refetch } = useTasks({ category: "FOLLOW_UP", pageSize: 100 });
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Follow-ups</h1>
-        <p className="text-sm text-muted">Client follow-ups across your firm, tracked as follow-up tasks.</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("pages.followUps.title")}</h1>
+        <p className="text-sm text-muted">{t("pages.followUps.description")}</p>
       </div>
 
       {isLoading && (

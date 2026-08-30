@@ -25,6 +25,13 @@ import { AiModule } from './ai/ai.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
 import { DocumentRequestsModule } from './document-requests/document-requests.module.js';
+import { NoticesModule } from './notices/notices.module.js';
+import { UdinModule } from './udin/udin.module.js';
+import { GstModule } from './gst/gst.module.js';
+import { TdsModule } from './tds/tds.module.js';
+import { TeamModule } from './team/team.module.js';
+import { AutomationsModule } from './automations/automations.module.js';
+import { NewsModule } from './news/news.module.js';
 
 @Module({
   imports: [
@@ -54,6 +61,13 @@ import { DocumentRequestsModule } from './document-requests/document-requests.mo
     AuditModule,
     DocumentsModule,
     DocumentRequestsModule,
+    NoticesModule,
+    UdinModule,
+    GstModule,
+    TdsModule,
+    TeamModule,
+    AutomationsModule,
+    NewsModule,
   ],
   controllers: [AppController],
   providers: [

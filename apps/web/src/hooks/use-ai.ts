@@ -49,7 +49,8 @@ export function useCreateAiConversation() {
 export function useSendAiMessage(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (text: string) => api.post<AiMessage>(`/ai/conversations/${conversationId}/messages`, { text }),
+    mutationFn: ({ text, source }: { text: string; source?: "TEXT" | "VOICE" }) =>
+      api.post<AiMessage>(`/ai/conversations/${conversationId}/messages`, { text, source }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["ai", "conversations", conversationId] });
       void queryClient.invalidateQueries({ queryKey: ["ai", "conversations"] });

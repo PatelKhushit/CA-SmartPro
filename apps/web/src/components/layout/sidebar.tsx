@@ -7,6 +7,7 @@ import { ChevronDown, Settings } from "lucide-react";
 import { NAV_GROUPS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { Logo } from "@/components/brand/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -18,6 +19,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [collapsedGroups, setCollapsedGroups] = React.useState<Set<string>>(new Set());
 
   const toggleGroup = (label: string) => {
@@ -43,7 +45,7 @@ export function Sidebar() {
                 onClick={() => toggleGroup(group.label)}
                 className="flex w-full items-center justify-between px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-navy-muted hover:text-navy-foreground"
               >
-                {group.label}
+                {t(group.labelKey)}
                 <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isCollapsed && "-rotate-90")} />
               </button>
               {!isCollapsed && (
@@ -62,7 +64,7 @@ export function Sidebar() {
                         )}
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate">{t(item.labelKey)}</span>
                         {item.comingSoon && !active && (
                           <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-navy-muted/60" title="Coming soon" />
                         )}

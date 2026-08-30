@@ -27,7 +27,8 @@ Rules:
 - Never guess or fabricate client data. Use the provided tools to retrieve real information. If a tool reports something is unavailable, tell the user "Information not available" rather than inventing a number.
 - Clearly distinguish between: (a) general informational explanation, (b) a calculated estimate, (c) official/source-backed information, and (d) a recommendation that requires professional review.
 - Never state that something is "definitely legally correct." Statutory rules can change; the CA remains responsible for professional review before filing or advising a client.
-- You cannot execute database writes, send messages, or perform destructive actions — you are read-only in this version.
+- You have exactly two write tools: create_task and create_followup. The user has already confirmed the action in their client UI before your response reaches you, so call the tool directly when the request is clear — do not ask "should I create this?" a second time. If the request is genuinely ambiguous (e.g. no client name, no clear title), ask a clarifying question instead of guessing.
+- You cannot send emails, WhatsApp messages, or perform any other write/destructive action — only create_task and create_followup are available.
 - Keep answers concise and practical for a working CA.`;
 
 const TOOLS: FunctionDeclaration[] = [
@@ -62,7 +63,36 @@ const TOOLS: FunctionDeclaration[] = [
       required: [],
     },
   },
+  {
+    name: 'create_task',
+    description: 'Create a new task, optionally for a specific client. Only call this after the user has confirmed the action.',
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        clientName: { type: 'string', description: 'Optional — omit for an internal/firm task.' },
+        dueDate: { type: 'string', description: 'ISO date, e.g. 2026-08-30.' },
+        priority: { type: 'string', description: 'LOW | MEDIUM | HIGH | URGENT' },
+      },
+      required: ['title'],
+    },
+  },
+  {
+    name: 'create_followup',
+    description: 'Create a client follow-up (a task category used for follow-up reminders). Only call this after the user has confirmed the action.',
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        clientName: { type: 'string' },
+        reason: { type: 'string', description: 'What the follow-up is about.' },
+        date: { type: 'string', description: 'ISO date, e.g. 2026-08-30.' },
+      },
+      required: ['clientName', 'reason'],
+    },
+  },
 ];
+
+const WRITE_TOOLS = new Set(['create_task', 'create_followup']);
 
 @Injectable()
 export class AiService {
@@ -101,6 +131,10 @@ export class AiService {
   }
 
   private async executeTool(user: AuthenticatedUser, name: string, input: Record<string, unknown>) {
+    if (WRITE_TOOLS.has(name) && !user.permissions.includes('ai.actions')) {
+      return { error: 'This user does not have permission to let the AI create records (ai.actions).' };
+    }
+
     switch (name) {
       case 'get_today_tasks':
         return this.tools.getTodayTasks(user.organizationId, user.id);
@@ -114,24 +148,37 @@ export class AiService {
           input.status ? String(input.status) : undefined,
           input.clientName ? String(input.clientName) : undefined,
         );
+      case 'create_task':
+        return this.tools.createTask(user, {
+          title: String(input.title ?? ''),
+          clientName: input.clientName ? String(input.clientName) : undefined,
+          dueDate: input.dueDate ? String(input.dueDate) : undefined,
+          priority: input.priority ? String(input.priority) : undefined,
+        });
+      case 'create_followup':
+        return this.tools.createFollowup(user, {
+          clientName: String(input.clientName ?? ''),
+          reason: String(input.reason ?? ''),
+          date: input.date ? String(input.date) : undefined,
+        });
       default:
         return { error: `Unknown tool: ${name}` };
     }
   }
 
-  async sendMessage(user: AuthenticatedUser, conversationId: string, text: string) {
+  async sendMessage(user: AuthenticatedUser, conversationId: string, text: string, source?: 'TEXT' | 'VOICE') {
     const conversation = await this.prisma.aiConversation.findFirst({
       where: { id: conversationId, organizationId: user.organizationId, userId: user.id },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
     if (!conversation) throw new NotFoundApiError('CONVERSATION_NOT_FOUND', 'This conversation could not be found.');
 
-    await this.prisma.aiMessage.create({ data: { conversationId, role: 'USER', content: text } });
+    await this.prisma.aiMessage.create({ data: { conversationId, role: 'USER', content: text, source } });
 
     if (!this.isConfigured()) {
       const notice =
         'AI Copilot is not configured yet in this environment (AI_API_KEY is not set), so I cannot generate a real response. This is not a fake answer — the integration is fully built and will work as soon as an API key is configured.';
-      const saved = await this.prisma.aiMessage.create({ data: { conversationId, role: 'ASSISTANT', content: notice } });
+      const saved = await this.prisma.aiMessage.create({ data: { conversationId, role: 'ASSISTANT', content: notice, source } });
       return saved;
     }
 
@@ -192,6 +239,7 @@ export class AiService {
         role: 'ASSISTANT',
         content: finalText,
         toolName: toolsUsed.length > 0 ? toolsUsed.join(',') : undefined,
+        source,
       },
     });
 

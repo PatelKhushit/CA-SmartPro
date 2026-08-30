@@ -17,16 +17,18 @@ import { useAuditLogs } from "@/hooks/use-audit-logs";
 import { useAuth } from "@/lib/auth-context";
 import { api, ApiClientError } from "@/lib/api-client";
 import { SERVICE_CATEGORY_LABELS } from "@/lib/types/client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 const RULE_STATUS_VARIANT = { DRAFT: "upcoming", ACTIVE: "completed", RETIRED: "cancelled" } as const;
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("pages.settings.title")}</h1>
         <p className="text-sm text-muted">{user?.organization.name}</p>
       </div>
 

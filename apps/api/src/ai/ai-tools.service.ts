@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 
 /**
  * Controlled, read-only backend tools the AI Copilot may call. Every method
@@ -123,5 +124,89 @@ export class AiToolsService {
         status: e.status,
       })),
     };
+  }
+
+  /**
+   * Write tool: creates a real Task. The only "confirmation" gate for these
+   * two write tools lives in the caller (chat/voice UI shows the user what
+   * will be created and requires an explicit confirm before this ever runs —
+   * see CopilotPage/VoiceAssistantPage) — by the time this executes, consent
+   * has already been given for this specific action.
+   */
+  async createTask(
+    user: AuthenticatedUser,
+    args: { title: string; clientName?: string; dueDate?: string; priority?: string; category?: string },
+  ) {
+    let clientId: string | undefined;
+    if (args.clientName) {
+      const client = await this.prisma.client.findFirst({
+        where: { organizationId: user.organizationId, deletedAt: null, displayName: { contains: args.clientName, mode: 'insensitive' } },
+        select: { id: true, displayName: true },
+      });
+      if (!client) return { error: `No client matching "${args.clientName}" was found. Task was not created.` };
+      clientId = client.id;
+    }
+
+    const priority = (['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const).includes(args.priority as never)
+      ? (args.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT')
+      : 'MEDIUM';
+    const category = args.category === 'FOLLOW_UP' ? 'FOLLOW_UP' : 'CLIENT_SPECIFIC';
+
+    const task = await this.prisma.task.create({
+      data: {
+        organizationId: user.organizationId,
+        clientId,
+        title: args.title,
+        category,
+        priority,
+        assignedUserId: user.id,
+        dueDate: args.dueDate ? new Date(args.dueDate) : undefined,
+        createdByUserId: user.id,
+      },
+    });
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId: user.organizationId,
+        userId: user.id,
+        action: 'ai_task_created',
+        entityType: 'task',
+        entityId: task.id,
+        metadata: { title: task.title, source: 'ai_tool' },
+      },
+    });
+    return { created: true, taskId: task.id, title: task.title, dueDate: task.dueDate?.toISOString().slice(0, 10) ?? null };
+  }
+
+  /** Write tool: creates a follow-up (modeled as a Task with category=FOLLOW_UP — see docs/STATUS.md). */
+  async createFollowup(user: AuthenticatedUser, args: { clientName: string; reason: string; date?: string }) {
+    const client = await this.prisma.client.findFirst({
+      where: { organizationId: user.organizationId, deletedAt: null, displayName: { contains: args.clientName, mode: 'insensitive' } },
+      select: { id: true, displayName: true },
+    });
+    if (!client) return { error: `No client matching "${args.clientName}" was found. Follow-up was not created.` };
+
+    const task = await this.prisma.task.create({
+      data: {
+        organizationId: user.organizationId,
+        clientId: client.id,
+        title: args.reason,
+        category: 'FOLLOW_UP',
+        priority: 'MEDIUM',
+        assignedUserId: user.id,
+        dueDate: args.date ? new Date(args.date) : undefined,
+        createdByUserId: user.id,
+      },
+    });
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId: user.organizationId,
+        userId: user.id,
+        action: 'ai_followup_created',
+        entityType: 'task',
+        entityId: task.id,
+        metadata: { client: client.displayName, source: 'ai_tool' },
+      },
+    });
+    return { created: true, taskId: task.id, client: client.displayName, dueDate: task.dueDate?.toISOString().slice(0, 10) ?? null };
   }
 }

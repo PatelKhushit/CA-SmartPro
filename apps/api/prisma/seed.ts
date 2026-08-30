@@ -42,6 +42,7 @@ const PERMISSIONS: Array<{ key: string; category: string; description: string }>
   { key: 'reports.view', category: 'reports', description: 'View and export reports' },
   // AI
   { key: 'ai.use', category: 'ai', description: 'Use the AI Copilot' },
+  { key: 'ai.actions', category: 'ai', description: 'Let the AI Copilot/Voice Assistant create tasks and follow-ups' },
   // Compliance & Calendar
   { key: 'compliance.manage', category: 'compliance', description: 'Configure compliance rules' },
   { key: 'calendar.manage', category: 'calendar', description: 'Create/edit calendar events' },
@@ -49,10 +50,26 @@ const PERMISSIONS: Array<{ key: string; category: string; description: string }>
   { key: 'goals.manage', category: 'goals', description: 'Set and edit productivity goals' },
   // Notifications
   { key: 'notifications.manage', category: 'notifications', description: 'Manage own notification preferences' },
+  // Notices
+  { key: 'notices.view', category: 'notices', description: 'View notices' },
+  { key: 'notices.manage', category: 'notices', description: 'Create/edit notices, comments, tasks' },
+  // UDIN
+  { key: 'udin.view', category: 'udin', description: 'View UDIN records' },
+  { key: 'udin.manage', category: 'udin', description: 'Create/edit UDIN records' },
+  // GST
+  { key: 'gst.view', category: 'gst', description: 'View GST profiles and returns' },
+  { key: 'gst.manage', category: 'gst', description: 'Create/edit GST profiles and returns' },
+  // TDS
+  { key: 'tds.view', category: 'tds', description: 'View TDS profiles, returns, challans, certificates' },
+  { key: 'tds.manage', category: 'tds', description: 'Create/edit TDS profiles, returns, challans, certificates' },
+  // Automations
+  { key: 'automations.view', category: 'automations', description: 'View automation rules and execution history' },
+  { key: 'automations.manage', category: 'automations', description: 'Create/edit/enable/pause automation rules' },
   // Org/Team administration
   { key: 'settings.manage', category: 'settings', description: 'Manage firm settings' },
   { key: 'users.manage', category: 'settings', description: 'Invite/manage team members' },
   { key: 'roles.manage', category: 'settings', description: 'Manage roles and permission assignments' },
+  { key: 'team.manage', category: 'settings', description: 'View team workload and invite/manage members' },
 ];
 
 const ROLES: Array<{
@@ -85,11 +102,17 @@ const ROLES: Array<{
       'document_requests.view', 'document_requests.manage',
       'payments.view',
       'reports.view',
-      'ai.use',
+      'ai.use', 'ai.actions',
       'compliance.manage',
       'calendar.manage',
       'goals.manage',
       'notifications.manage',
+      'notices.view', 'notices.manage',
+      'udin.view', 'udin.manage',
+      'gst.view', 'gst.manage',
+      'tds.view', 'tds.manage',
+      'automations.view', 'automations.manage',
+      'team.manage',
     ],
   },
   {
@@ -102,10 +125,14 @@ const ROLES: Array<{
       'documents.view', 'documents.upload', 'documents.edit',
       'document_requests.view',
       'reports.view',
-      'ai.use',
+      'ai.use', 'ai.actions',
       'calendar.manage',
       'goals.manage',
       'notifications.manage',
+      'notices.view', 'notices.manage',
+      'udin.view', 'udin.manage',
+      'gst.view', 'gst.manage',
+      'tds.view', 'tds.manage',
     ],
   },
   {
@@ -119,6 +146,10 @@ const ROLES: Array<{
       'document_requests.view',
       'ai.use',
       'notifications.manage',
+      'notices.view',
+      'udin.view',
+      'gst.view',
+      'tds.view',
     ],
   },
   {

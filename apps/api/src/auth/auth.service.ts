@@ -10,17 +10,19 @@ import type { RegisterDto } from './dto/register.dto.js';
 import type { LoginDto } from './dto/login.dto.js';
 
 const REFRESH_TOKEN_BYTES = 48;
-const RESET_TOKEN_BYTES = 32;
+export const RESET_TOKEN_BYTES = 32;
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_MINUTES = 15;
-const RESET_TOKEN_TTL_MINUTES = 30;
+// Exported so TeamService can issue a "set your password" link with the same
+// TTL when inviting a team member — it's the same token flow either way.
+export const RESET_TOKEN_TTL_MINUTES = 30;
 
 export interface SessionMeta {
   userAgent?: string;
   ipAddress?: string;
 }
 
-function hashToken(token: string): string {
+export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
@@ -299,9 +301,18 @@ export class AuthService {
     const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
 
     await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUniqueOrThrow({ where: { id: resetToken.userId }, select: { status: true } });
       await tx.user.update({
         where: { id: resetToken.userId },
-        data: { passwordHash, failedLoginCount: 0, lockedUntil: null },
+        data: {
+          passwordHash,
+          failedLoginCount: 0,
+          lockedUntil: null,
+          // This same token/confirm flow doubles as "accept invite" (see
+          // TeamService.invite) — an INVITED user setting their password for
+          // the first time becomes ACTIVE. No-op for an existing ACTIVE user.
+          status: user.status === 'INVITED' ? 'ACTIVE' : undefined,
+        },
       });
       await tx.passwordResetToken.update({
         where: { id: resetToken.id },

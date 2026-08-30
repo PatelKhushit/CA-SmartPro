@@ -4,16 +4,18 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { CALCULATORS } from "@/lib/calculator-configs";
 import { CalculatorRunner } from "@/components/calculator/calculator-runner";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function CalculatorPage() {
+  const { t } = useLanguage();
   const [activeId, setActiveId] = React.useState(CALCULATORS[0].id);
   const active = CALCULATORS.find((c) => c.id === activeId)!;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">CA Calculator</h1>
-        <p className="text-sm text-muted">Quick, transparent calculations — every result shows its formula and assumptions.</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("pages.calculator.title")}</h1>
+        <p className="text-sm text-muted">{t("pages.calculator.description")}</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[200px_1fr]">

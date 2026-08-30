@@ -19,6 +19,7 @@ import { useTasks, useTaskTemplates, useDeactivateTaskTemplate, useGenerateTasks
 import { PRIORITY_MAP, effectiveTaskStatus } from "@/lib/status";
 import { TASK_FREQUENCY_LABELS } from "@/lib/types/task";
 import { ApiClientError } from "@/lib/api-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 function formatDueDate(dueDate: string | null) {
   if (!dueDate) return "No due date";
@@ -26,14 +27,15 @@ function formatDueDate(dueDate: string | null) {
 }
 
 export default function TasksPage() {
+  const { t } = useLanguage();
   const [status, setStatus] = React.useState<string>("");
   const { data, isLoading, isError, refetch } = useTasks({ status: status || undefined, pageSize: 50 });
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Work</h1>
-        <p className="text-sm text-muted">Every task across your firm — daily, recurring, and one-off.</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("pages.tasks.title")}</h1>
+        <p className="text-sm text-muted">{t("pages.tasks.description")}</p>
       </div>
 
       <Tabs defaultValue="tasks">

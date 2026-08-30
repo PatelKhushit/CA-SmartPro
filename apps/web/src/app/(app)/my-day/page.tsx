@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useMyDay } from "@/hooks/use-tasks";
 import { useGoals, useDeleteGoal } from "@/hooks/use-goals";
 import { Button } from "@/components/ui/button";
@@ -38,15 +39,16 @@ function todayKey() {
   return `myday_started_${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-function greeting(): string {
+function greetingKey(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
+  if (hour < 12) return "pages.myDay.greetingMorning";
+  if (hour < 17) return "pages.myDay.greetingAfternoon";
+  return "pages.myDay.greetingEvening";
 }
 
 export default function MyDayPage() {
   const { user, hasPermission } = useAuth();
+  const { t } = useLanguage();
   const { data, isLoading, isError, refetch } = useMyDay();
   const [started, setStarted] = React.useState(false);
 
@@ -91,13 +93,13 @@ export default function MyDayPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">
-            {greeting()}, {firstName} 👋
+            {t(greetingKey())}, {firstName} 👋
           </h1>
-          <p className="text-sm text-muted">Here&apos;s what&apos;s happening in your practice today — {dateLabel}</p>
+          <p className="text-sm text-muted">{t("pages.myDay.subtitle", { date: dateLabel })}</p>
         </div>
         {!started && (
           <Button size="lg" onClick={startMyDay} className="w-full sm:w-auto">
-            Start My Day <ArrowRight className="h-4 w-4" />
+            {t("pages.myDay.startMyDay")} <ArrowRight className="h-4 w-4" />
           </Button>
         )}
       </div>

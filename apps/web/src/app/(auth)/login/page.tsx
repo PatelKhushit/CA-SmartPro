@@ -10,10 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth, ApiClientError } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { loginSchema, type LoginInput } from "@/lib/validation/auth";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const {
     register,
@@ -30,7 +32,7 @@ export default function LoginPage() {
       if (err instanceof ApiClientError) {
         setError("root", { message: err.message });
       } else {
-        toast.error("We couldn't sign you in. Please check your connection and try again.");
+        toast.error(t("auth.login.genericError"));
       }
     }
   };
@@ -40,7 +42,7 @@ export default function LoginPage() {
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Work email</Label>
+            <Label htmlFor="email">{t("auth.login.emailLabel")}</Label>
             <Input
               id="email"
               type="email"
@@ -58,9 +60,9 @@ export default function LoginPage() {
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.login.passwordLabel")}</Label>
               <Link href="/forgot-password" className="text-xs text-brand-600 hover:underline">
-                Forgot password?
+                {t("auth.login.forgotPassword")}
               </Link>
             </div>
             <Input
@@ -85,14 +87,14 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
-            {isSubmitting ? "Signing in…" : "Sign in"}
+            {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted">
-          New to CA SmartPro?{" "}
+          {t("auth.login.newHere")}{" "}
           <Link href="/register" className="font-medium text-brand-600 hover:underline">
-            Create your firm workspace
+            {t("auth.login.createWorkspace")}
           </Link>
         </p>
       </CardContent>

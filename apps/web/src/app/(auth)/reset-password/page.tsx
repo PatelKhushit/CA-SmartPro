@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, ApiClientError } from "@/lib/api-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 const schema = z
   .object({
@@ -30,6 +31,7 @@ type Input = z.infer<typeof schema>;
 function ResetPasswordForm() {
   const params = useSearchParams();
   const router = useRouter();
+  const { t } = useLanguage();
   const token = params.get("token") ?? "";
   const {
     register,
@@ -47,7 +49,7 @@ function ResetPasswordForm() {
       if (err instanceof ApiClientError) {
         setError("root", { message: err.message });
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t("auth.resetPassword.genericError"));
       }
     }
   };
@@ -56,7 +58,7 @@ function ResetPasswordForm() {
     return (
       <Card>
         <CardContent className="pt-6 text-center text-sm text-muted">
-          This reset link is missing its token.{" "}
+          {t("auth.resetPassword.missingToken")}{" "}
           <Link href="/forgot-password" className="text-brand-600 underline">
             Request a new one
           </Link>
@@ -71,12 +73,12 @@ function ResetPasswordForm() {
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="newPassword">New password</Label>
+            <Label htmlFor="newPassword">{t("auth.resetPassword.newPasswordLabel")}</Label>
             <Input id="newPassword" type="password" invalid={!!errors.newPassword} {...register("newPassword")} />
             {errors.newPassword && <p className="text-xs text-status-overdue">{errors.newPassword.message}</p>}
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Label htmlFor="confirmPassword">{t("auth.resetPassword.confirmPasswordLabel")}</Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -89,7 +91,7 @@ function ResetPasswordForm() {
           </div>
           {errors.root && <p className="text-sm text-status-overdue">{errors.root.message}</p>}
           <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "Updating…" : "Update password"}
+            {isSubmitting ? t("auth.resetPassword.submitting") : t("auth.resetPassword.submit")}
           </Button>
         </form>
       </CardContent>

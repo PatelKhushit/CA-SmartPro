@@ -12,6 +12,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { NewClientDialog } from "@/components/clients/new-client-dialog";
 import { BUSINESS_TYPE_LABELS } from "@/lib/types/client";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { Users } from "lucide-react";
 
 const STATUS_VARIANT = {
@@ -21,6 +22,7 @@ const STATUS_VARIANT = {
 } as const;
 
 export default function ClientsPage() {
+  const { t } = useLanguage();
   const [search, setSearch] = React.useState("");
   const debouncedSearch = useDebouncedValue(search, 300);
   const { data, isLoading, isError, refetch } = useClients({ search: debouncedSearch });
@@ -29,8 +31,8 @@ export default function ClientsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Clients</h1>
-          <p className="text-sm text-muted">Every client your firm serves, in one place.</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("pages.clients.title")}</h1>
+          <p className="text-sm text-muted">{t("pages.clients.description")}</p>
         </div>
         <NewClientDialog />
       </div>

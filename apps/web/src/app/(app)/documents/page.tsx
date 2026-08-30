@@ -13,8 +13,10 @@ import { ErrorState } from "@/components/ui/error-state";
 import { DocumentTable } from "@/components/documents/document-table";
 import { UploadDocumentDialog } from "@/components/documents/upload-document-dialog";
 import { DOCUMENT_CATEGORY_LABELS, type DocumentCategory } from "@/lib/types/document";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function DocumentsPage() {
+  const { t } = useLanguage();
   const [search, setSearch] = React.useState("");
   const [clientId, setClientId] = React.useState("");
   const [category, setCategory] = React.useState("");
@@ -32,8 +34,8 @@ export default function DocumentsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Documents</h1>
-          <p className="text-sm text-muted">Every file your firm holds for clients and internal work, privately stored.</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("pages.documents.title")}</h1>
+          <p className="text-sm text-muted">{t("pages.documents.description")}</p>
         </div>
         <UploadDocumentDialog />
       </div>

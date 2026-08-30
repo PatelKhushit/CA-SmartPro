@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 const schema = z.object({ email: z.string().email("Enter a valid email address.") });
 type Input = z.infer<typeof schema>;
 
 export default function ForgotPasswordPage() {
+  const { t } = useLanguage();
   const [sent, setSent] = useState(false);
   const [devToken, setDevToken] = useState<string | null>(null);
   const {
@@ -59,17 +61,17 @@ export default function ForgotPasswordPage() {
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Work email</Label>
+            <Label htmlFor="email">{t("auth.forgotPassword.emailLabel")}</Label>
             <Input id="email" type="email" invalid={!!errors.email} {...register("email")} />
             {errors.email && <p className="text-xs text-status-overdue">{errors.email.message}</p>}
           </div>
           <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "Sending…" : "Send reset link"}
+            {isSubmitting ? t("auth.forgotPassword.submitting") : t("auth.forgotPassword.submit")}
           </Button>
         </form>
         <p className="mt-6 text-center text-sm text-muted">
           <Link href="/login" className="font-medium text-brand-600 hover:underline">
-            Back to sign in
+            {t("auth.forgotPassword.backToLogin")}
           </Link>
         </p>
       </CardContent>

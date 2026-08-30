@@ -38,6 +38,6 @@ export class AiController {
   @Throttle({ default: { limit: 20, ttl: 60 * 1000 } })
   @Post('conversations/:id/messages')
   sendMessage(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: SendMessageDto) {
-    return this.aiService.sendMessage(user, id, dto.text);
+    return this.aiService.sendMessage(user, id, dto.text, dto.source);
   }
 }

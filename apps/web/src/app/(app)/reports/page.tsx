@@ -12,16 +12,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useDailyReport, useMonthlyReport, useTeamReport } from "@/hooks/use-reports";
 import { PRIORITY_MAP, TASK_STATUS_MAP } from "@/lib/status";
 import { getAccessToken } from "@/lib/api-client";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { FileText } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
 
 export default function ReportsPage() {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
-        <p className="text-sm text-muted">Productivity, compliance health, and team workload — computed live, never stale.</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("pages.reports.title")}</h1>
+        <p className="text-sm text-muted">{t("pages.reports.description")}</p>
       </div>
 
       <Tabs defaultValue="daily">
