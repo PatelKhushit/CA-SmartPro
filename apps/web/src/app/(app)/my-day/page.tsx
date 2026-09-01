@@ -128,10 +128,12 @@ export default function MyDayPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Premium dashboard — always dark, matches the CA SmartPro premium
-          design spec regardless of the app's light/dark toggle (same
-          approach as .auth-shell). Legacy workspace sections below use the
-          app's normal theme so they stay consistent with the rest of the app. */}
+      {/* Premium dashboard — follows the app's real light-dominant, navy-
+          structured theme (60-30-10: off-white canvas, navy text/structure,
+          one vivid accent for CTAs/highlights) via the --dash-* aliases in
+          .dashboard-shell, plus a user-selectable accent. Legacy workspace
+          sections below use the app's normal theme classes directly, so both
+          stay visually consistent with each other and the rest of the app. */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-4">
           <DashboardHeader firstName={firstName} />

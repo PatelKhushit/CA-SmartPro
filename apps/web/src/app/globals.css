@@ -224,43 +224,45 @@ body {
   );
 }
 
-/* Dashboard premium shell — a fixed dark surface (independent of the app's
-   light/dark toggle, same pattern as .auth-shell) with a user-selectable
-   accent among three presets. Scoped entirely to --dash-* tokens so it never
-   touches the --brand- or --status- tokens the rest of the app relies on. */
+/* Dashboard premium shell — aliases the app's real (light-dominant, navy-
+   structured) theme tokens under --dash-* names, so premium components never
+   hard-code colors and automatically follow the app-wide light/dark toggle.
+   Layers a user-selectable accent (60-30-10 rule: off-white canvas, navy
+   structure, a single vivid accent used sparingly for CTAs/highlights) among
+   three presets on top. */
 .dashboard-shell {
-  --dash-bg: #0d0d1a;
-  --dash-surface: #1a1a2e;
-  --dash-surface-2: #15152640;
-  --dash-border: rgba(255, 255, 255, 0.08);
-  --dash-text-primary: #f8fafc;
-  --dash-text-secondary: #a0a4b8;
-  --dash-text-muted: #6b7280;
-  --dash-success: #22c55e;
-  --dash-success-bg: rgba(34, 197, 94, 0.12);
-  --dash-warning: #f59e0b;
-  --dash-warning-bg: rgba(245, 158, 11, 0.12);
-  --dash-danger: #f87171;
-  --dash-danger-bg: rgba(248, 113, 113, 0.12);
+  --dash-bg: var(--background);
+  --dash-surface: var(--surface);
+  --dash-surface-2: var(--muted-surface);
+  --dash-border: var(--border);
+  --dash-text-primary: var(--foreground);
+  --dash-text-secondary: var(--muted);
+  --dash-text-muted: var(--disabled);
+  --dash-success: var(--status-completed);
+  --dash-success-bg: var(--status-completed-bg);
+  --dash-warning: var(--status-attention);
+  --dash-warning-bg: var(--status-attention-bg);
+  --dash-danger: var(--status-overdue);
+  --dash-danger-bg: var(--status-overdue-bg);
 }
 
-.dashboard-shell[data-accent="purple"] {
-  --dash-accent: #6c5ce7;
-  --dash-accent-bright: #a78bfa;
-  --dash-accent-bg: rgba(108, 92, 231, 0.14);
-  --dash-accent-glow: rgba(108, 92, 231, 0.35);
+.dashboard-shell[data-accent="emerald"] {
+  --dash-accent: #16a34a;
+  --dash-accent-bright: #22c55e;
+  --dash-accent-bg: rgba(22, 163, 74, 0.12);
+  --dash-accent-glow: rgba(22, 163, 74, 0.3);
 }
 
 .dashboard-shell[data-accent="blue"] {
-  --dash-accent: #2563eb;
-  --dash-accent-bright: #60a5fa;
-  --dash-accent-bg: rgba(37, 99, 235, 0.14);
-  --dash-accent-glow: rgba(37, 99, 235, 0.35);
+  --dash-accent: var(--brand-600);
+  --dash-accent-bright: var(--brand-500);
+  --dash-accent-bg: rgba(37, 99, 235, 0.12);
+  --dash-accent-glow: rgba(37, 99, 235, 0.3);
 }
 
-.dashboard-shell[data-accent="green"] {
-  --dash-accent: #059669;
-  --dash-accent-bright: #34d399;
-  --dash-accent-bg: rgba(5, 150, 105, 0.14);
-  --dash-accent-glow: rgba(5, 150, 105, 0.35);
+.dashboard-shell[data-accent="orange"] {
+  --dash-accent: #f59e0b;
+  --dash-accent-bright: #fb923c;
+  --dash-accent-bg: rgba(245, 158, 11, 0.12);
+  --dash-accent-glow: rgba(245, 158, 11, 0.3);
 }
