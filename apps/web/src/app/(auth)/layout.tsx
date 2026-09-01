@@ -1,7 +1,27 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import { LogoMark } from "@/components/brand/logo";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { status } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") router.replace("/my-day");
+  }, [status, router]);
+
+  if (status === "authenticated") {
+    return (
+      <div className="flex flex-1 items-center justify-center bg-background">
+        <p className="text-sm text-muted">Loading…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="auth-shell auth-gradient relative flex min-h-screen flex-1 items-center justify-center px-4 py-12">
       <div className="absolute right-4 top-4">
