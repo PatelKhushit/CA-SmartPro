@@ -13,6 +13,7 @@ apps/web/out/
 # nest / build output
 apps/api/dist/
 dist/
+*.tsbuildinfo
 
 # env files
 .env

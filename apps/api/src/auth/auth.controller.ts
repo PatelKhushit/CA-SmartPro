@@ -31,10 +31,16 @@ export class AuthController {
   ) {}
 
   private setRefreshCookie(res: Response, token: string, expiresAt: Date) {
+    const isProd = this.config.get<string>('nodeEnv') === 'production';
     res.cookie(REFRESH_COOKIE_NAME, token, {
       httpOnly: true,
-      secure: this.config.get<string>('nodeEnv') === 'production',
-      sameSite: 'strict',
+      secure: isProd,
+      // The frontend and API are deployed on separate *.vercel.app subdomains,
+      // which the Public Suffix List treats as different sites (not just
+      // different origins) — SameSite=Strict/Lax cookies are never attached to
+      // those cross-site fetches, so refresh silently "fails" every time.
+      // SameSite=None requires Secure, which is only true in production.
+      sameSite: isProd ? 'none' : 'lax',
       path: REFRESH_COOKIE_PATH,
       expires: expiresAt,
       signed: true,

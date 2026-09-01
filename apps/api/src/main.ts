@@ -1,8 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
+import type { RequestHandler } from 'express';
+import helmetImport from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
+
+// helmet's dual ESM/CJS package types resolve inconsistently under
+// moduleResolution "nodenext" depending on which TS invocation path resolves
+// the import (works locally, fails on some build hosts — see
+// helmetjs/helmet#414 and microsoft/TypeScript#50466). The runtime import is
+// unaffected by this; only the static type needs an explicit assist.
+const helmet = helmetImport as unknown as (options?: Record<string, unknown>) => RequestHandler;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
