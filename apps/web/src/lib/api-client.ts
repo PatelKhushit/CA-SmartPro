@@ -1,4 +1,5 @@
 const configuredBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+const fallbackBaseUrl = "http://localhost:4000/api/v1";
 
 if (!configuredBaseUrl && process.env.NODE_ENV === "production") {
   // Silently falling back to a dev-only URL in production is exactly what
@@ -6,11 +7,11 @@ if (!configuredBaseUrl && process.env.NODE_ENV === "production") {
   // with no way to tell why from the UI. Surface it loudly instead.
   // eslint-disable-next-line no-console
   console.error(
-    "NEXT_PUBLIC_API_BASE_URL is not set — falling back to a localhost URL that will not work in production.",
+    `NEXT_PUBLIC_API_BASE_URL is not set at build time — falling back to "${fallbackBaseUrl}", which will not work in production.`,
   );
 }
 
-export const API_BASE_URL = configuredBaseUrl ?? "http://localhost:4000/api/v1";
+export const API_BASE_URL = configuredBaseUrl ?? fallbackBaseUrl;
 
 export class ApiClientError extends Error {
   constructor(
