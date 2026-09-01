@@ -1,4 +1,16 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
+const configuredBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+if (!configuredBaseUrl && process.env.NODE_ENV === "production") {
+  // Silently falling back to a dev-only URL in production is exactly what
+  // caused a full signup/login outage here before — every request failed
+  // with no way to tell why from the UI. Surface it loudly instead.
+  // eslint-disable-next-line no-console
+  console.error(
+    "NEXT_PUBLIC_API_BASE_URL is not set — falling back to a localhost URL that will not work in production.",
+  );
+}
+
+export const API_BASE_URL = configuredBaseUrl ?? "http://localhost:4000/api/v1";
 
 export class ApiClientError extends Error {
   constructor(
