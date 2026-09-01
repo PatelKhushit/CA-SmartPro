@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm install && npm run build --workspace=apps/api && npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+    buildCommand: npm install && npm run build --workspace=apps/api && npx prisma migrate deploy --schema apps/api/prisma/schema.prisma && npx tsx apps/api/prisma/seed.ts
     startCommand: node apps/api/dist/main.js
     healthCheckPath: /api/v1/health
     envVars:
