@@ -4,22 +4,21 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle,
   ArrowRight,
-  CalendarClock,
   CheckCircle2,
   Clock,
   Flame,
   ListChecks,
-  PhoneCall,
-  Receipt,
   Target,
+  Users,
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useMyDay } from "@/hooks/use-tasks";
 import { useGoals, useDeleteGoal } from "@/hooks/use-goals";
+import { useClients } from "@/hooks/use-clients";
+import { useMonthlyReport } from "@/hooks/use-reports";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,27 +28,49 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { NewGoalDialog, GOAL_TYPE_LABELS } from "@/components/my-day/new-goal-dialog";
 import { PRIORITY_MAP, effectiveTaskStatus } from "@/lib/status";
-import { KpiCard } from "@/components/dashboard/kpi-card";
 import { RecentClientsCard } from "@/components/dashboard/recent-clients-card";
 import { AiCopilotCard } from "@/components/dashboard/ai-copilot-card";
 import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
+import { DashboardHeader } from "@/components/dashboard/premium/dashboard-header";
+import { StatCard, StatCardSkeleton } from "@/components/dashboard/premium/stat-card";
+import { TaskProgressDonut } from "@/components/dashboard/premium/task-progress-donut";
+import { RecentTasksPanel } from "@/components/dashboard/premium/recent-tasks-panel";
+import { MonthlyOverviewChart } from "@/components/dashboard/premium/monthly-overview-chart";
+import { UpcomingRemindersPanel } from "@/components/dashboard/premium/upcoming-reminders-panel";
+import { ThemeOptionsPanel } from "@/components/dashboard/premium/theme-options-panel";
+import { ColorPaletteSection } from "@/components/dashboard/premium/color-palette-section";
+import { KeyFeaturesSection } from "@/components/dashboard/premium/key-features-section";
+import { BrandingBenefitsSection } from "@/components/dashboard/premium/branding-benefits-section";
+
+function currentMonthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function accuracySubtitle(percent: number): { text: string; tone: "success" | "warning" | "muted" } {
+  if (percent >= 80) return { text: "Great Progress!", tone: "success" };
+  if (percent >= 50) return { text: "Keep it up!", tone: "warning" };
+  return { text: "Needs attention", tone: "muted" };
+}
 
 function todayKey() {
   const d = new Date();
   return `myday_started_${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-function greetingKey(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "pages.myDay.greetingMorning";
-  if (hour < 17) return "pages.myDay.greetingAfternoon";
-  return "pages.myDay.greetingEvening";
-}
-
 export default function MyDayPage() {
   const { user, hasPermission } = useAuth();
   const { t } = useLanguage();
   const { data, isLoading, isError, refetch } = useMyDay();
+  const { data: clientsPage } = useClients({ status: "ACTIVE", pageSize: 1 });
+  const { data: monthlyReport } = useMonthlyReport(currentMonthKey());
+  const { data: lastMonthReport } = useMonthlyReport(
+    (() => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    })(),
+  );
   const [started, setStarted] = React.useState(false);
 
   React.useEffect(() => {
@@ -88,28 +109,111 @@ export default function MyDayPage() {
     );
   }
 
+  const inProgressCount = data.tasks.filter((task) => task.status === "IN_PROGRESS").length;
+  const pendingCount = Math.max(0, data.counts.total - data.counts.completed - inProgressCount);
+
+  const dailyAccuracy = data.counts.productivityPercent;
+  const dailyTone = accuracySubtitle(dailyAccuracy);
+  const monthlyAccuracy = monthlyReport?.productivityPercent ?? 0;
+  const monthlyTone = accuracySubtitle(monthlyAccuracy);
+
+  const activeClients = clientsPage?.total ?? 0;
+  const clientDelta = lastMonthReport ? activeClients - lastMonthReport.activeClients : null;
+  const clientSubtitle =
+    clientDelta === null
+      ? "Active this month"
+      : clientDelta === 0
+        ? "No change this month"
+        : `${clientDelta > 0 ? "+" : ""}${clientDelta} this month`;
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      {/* Premium dashboard — always dark, matches the CA SmartPro premium
+          design spec regardless of the app's light/dark toggle (same
+          approach as .auth-shell). Legacy workspace sections below use the
+          app's normal theme so they stay consistent with the rest of the app. */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_300px]">
+        <div className="flex flex-col gap-4">
+          <DashboardHeader firstName={firstName} />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {isLoading ? (
+              <>
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+              </>
+            ) : (
+              <>
+                <StatCard
+                  icon={ListChecks}
+                  label="Tasks Today"
+                  value={String(data.counts.total)}
+                  subtitle={`${data.counts.completed} Completed`}
+                  progress={dailyAccuracy}
+                  subtitleTone="muted"
+                />
+                <StatCard
+                  icon={Target}
+                  label="Daily Accuracy"
+                  value={`${dailyAccuracy}%`}
+                  subtitle={dailyTone.text}
+                  subtitleTone={dailyTone.tone}
+                  accent="success"
+                />
+                <StatCard
+                  icon={Flame}
+                  label="Monthly Accuracy"
+                  value={`${monthlyAccuracy}%`}
+                  subtitle={monthlyTone.text}
+                  subtitleTone={monthlyTone.tone}
+                  accent="accent"
+                />
+                <StatCard
+                  icon={Users}
+                  label="Active Clients"
+                  value={String(activeClients)}
+                  subtitle={clientSubtitle}
+                  subtitleTone={clientDelta && clientDelta > 0 ? "success" : "muted"}
+                  accent="warning"
+                />
+              </>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <TaskProgressDonut completed={data.counts.completed} inProgress={inProgressCount} pending={pendingCount} />
+            <RecentTasksPanel tasks={data.tasks} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <MonthlyOverviewChart />
+            <UpcomingRemindersPanel />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <ColorPaletteSection />
+            <KeyFeaturesSection />
+          </div>
+
+          <BrandingBenefitsSection />
+        </div>
+
+        <div className="xl:sticky xl:top-6 xl:self-start">
+          <ThemeOptionsPanel />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
-            {t(greetingKey())}, {firstName} 👋
-          </h1>
-          <p className="text-sm text-muted">{t("pages.myDay.subtitle", { date: dateLabel })}</p>
+          <h2 className="text-lg font-semibold text-foreground">{t("pages.myDay.subtitle", { date: dateLabel })}</h2>
         </div>
         {!started && (
           <Button size="lg" onClick={startMyDay} className="w-full sm:w-auto">
             {t("pages.myDay.startMyDay")} <ArrowRight className="h-4 w-4" />
           </Button>
         )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard icon={ListChecks} label="Tasks Today" value={data.counts.total} accent="info" />
-        <KpiCard icon={AlertTriangle} label="Overdue Tasks" value={data.counts.overdue} accent="overdue" />
-        <KpiCard icon={CalendarClock} label="Compliance Due" value={data.counts.complianceDue} accent="attention" />
-        <KpiCard icon={PhoneCall} label="Follow-ups" value={data.counts.followUps} accent="attention" />
-        <KpiCard icon={Receipt} label="Payment Tasks" value={data.counts.paymentTasks} accent="attention" />
       </div>
 
       {started && (

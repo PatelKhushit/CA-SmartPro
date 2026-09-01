@@ -6,6 +6,21 @@ import { useAuth } from "@/lib/auth-context";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { DashboardThemeProvider, useDashboardTheme } from "@/lib/dashboard-theme";
+
+function AppShell({ children }: { children: React.ReactNode }) {
+  const { accent } = useDashboardTheme();
+  return (
+    <div className="dashboard-shell flex min-h-screen flex-1 bg-background" data-accent={accent}>
+      <Sidebar />
+      <div className="flex flex-1 flex-col">
+        <Topbar />
+        <main className="flex-1 px-4 pb-20 pt-6 md:px-6 md:pb-6">{children}</main>
+      </div>
+      <MobileNav />
+    </div>
+  );
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { status } = useAuth();
@@ -24,13 +39,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-1 bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col">
-        <Topbar />
-        <main className="flex-1 px-4 pb-20 pt-6 md:px-6 md:pb-6">{children}</main>
-      </div>
-      <MobileNav />
-    </div>
+    <DashboardThemeProvider>
+      <AppShell>{children}</AppShell>
+    </DashboardThemeProvider>
   );
 }

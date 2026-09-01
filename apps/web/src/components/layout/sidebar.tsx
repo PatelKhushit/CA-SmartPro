@@ -57,11 +57,21 @@ export function Sidebar() {
                         key={item.href}
                         href={item.href}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          "flex items-center gap-3 rounded-lg border-l-2 border-transparent px-3 py-2 text-sm font-medium transition-all duration-200",
                           active
-                            ? "bg-brand-500 text-white"
+                            ? "text-white"
                             : "text-navy-muted hover:bg-navy-surface hover:text-navy-foreground",
                         )}
+                        style={
+                          active
+                            ? {
+                                background: "var(--dash-accent-bg, var(--brand-500))",
+                                borderLeftColor: "var(--dash-accent-bright, var(--brand-500))",
+                                boxShadow: "0 0 16px var(--dash-accent-glow, transparent)",
+                                color: "var(--dash-accent-bright, white)",
+                              }
+                            : undefined
+                        }
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
                         <span className="truncate">{t(item.labelKey)}</span>
@@ -82,12 +92,12 @@ export function Sidebar() {
           onClick={() => router.push("/settings")}
           className="flex shrink-0 items-center gap-3 border-t border-navy-border px-4 py-3 text-left transition-colors hover:bg-navy-surface"
         >
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-9 w-9 border" style={{ borderColor: "var(--dash-accent, transparent)" }}>
             <AvatarFallback>{initials(user.fullName)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-navy-foreground">{user.organization.name}</p>
-            <p className="truncate text-xs text-navy-muted">{user.fullName}</p>
+            <p className="truncate text-sm font-medium text-navy-foreground">{user.fullName}</p>
+            <p className="truncate text-xs text-navy-muted">{user.role.name}</p>
           </div>
           <Settings className="h-4 w-4 shrink-0 text-navy-muted" />
         </button>
