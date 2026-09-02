@@ -16,6 +16,7 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
+import { GlobalSearch } from "./global-search";
 
 function initials(name: string) {
   return name
@@ -33,6 +34,7 @@ export function Topbar() {
 
   return (
     <header className="flex h-16 items-center gap-4 border-b border-border bg-surface px-4 md:px-6">
+      <GlobalSearch />
       <div className="flex-1" />
       <LanguageSwitcher />
       <ThemeToggle />

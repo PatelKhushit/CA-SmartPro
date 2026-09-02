@@ -32,6 +32,7 @@ import { TdsModule } from './tds/tds.module.js';
 import { TeamModule } from './team/team.module.js';
 import { AutomationsModule } from './automations/automations.module.js';
 import { NewsModule } from './news/news.module.js';
+import { SearchModule } from './search/search.module.js';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { NewsModule } from './news/news.module.js';
     TeamModule,
     AutomationsModule,
     NewsModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [
