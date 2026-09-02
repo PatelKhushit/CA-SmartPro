@@ -211,19 +211,6 @@ body {
   --status-overdue-bg: #fef2f2;
 }
 
-.auth-gradient {
-  background: linear-gradient(
-    180deg,
-    #0d1b2a 0px,
-    #0d1b2a 60px,
-    #2563eb 220px,
-    #16a34a 380px,
-    #ffffff 520px,
-    #f8fafc 640px,
-    #f8fafc 100%
-  );
-}
-
 /* Dashboard premium shell — aliases the app's real (light-dominant, navy-
    structured) theme tokens under --dash-* names, so premium components never
    hard-code colors and automatically follow the app-wide light/dark toggle.

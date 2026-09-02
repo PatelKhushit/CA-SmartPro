@@ -13,6 +13,11 @@ if (!configuredBaseUrl && process.env.NODE_ENV === "production") {
 
 export const API_BASE_URL = configuredBaseUrl ?? fallbackBaseUrl;
 
+/** Fire-and-forget ping to wake a sleeping Render free-tier instance before the user finishes typing. */
+export function warmApi() {
+  fetch(`${API_BASE_URL}/health`).catch(() => {});
+}
+
 export class ApiClientError extends Error {
   constructor(
     public readonly code: string,
