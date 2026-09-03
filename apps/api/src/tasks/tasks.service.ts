@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
-import { ForbiddenApiError, NotFoundApiError } from '../common/errors/api-error.js';
+import { AuditService } from '../audit/audit.service.js';
+import { ApiError, ForbiddenApiError, NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import type { CreateTaskDto } from './dto/create-task.dto.js';
 import type { UpdateTaskDto } from './dto/update-task.dto.js';
@@ -31,6 +32,7 @@ export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly audit: AuditService,
   ) {}
 
   async list(organizationId: string, query: ListTasksDto) {
@@ -109,15 +111,17 @@ export class TasksService {
             : undefined,
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'task_created',
           entityType: 'task',
           entityId: created.id,
+          after: created,
         },
-      });
+        tx,
+      );
       return created;
     });
     return this.findOwned(user.organizationId, task.id);
@@ -133,7 +137,7 @@ export class TasksService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.task.update({
+      const after = await tx.task.update({
         where: { id },
         data: {
           title: dto.title,
@@ -153,26 +157,32 @@ export class TasksService {
         await tx.taskAssignment.create({
           data: { taskId: id, userId: dto.assignedUserId, assignedById: user.id },
         });
-        await tx.auditLog.create({
-          data: {
+        await this.audit.log(
+          {
             organizationId: user.organizationId,
             userId: user.id,
             action: 'task_assigned',
             entityType: 'task',
             entityId: id,
+            before: existing,
+            after,
             metadata: { assignedUserId: dto.assignedUserId },
           },
-        });
+          tx,
+        );
       } else {
-        await tx.auditLog.create({
-          data: {
+        await this.audit.log(
+          {
             organizationId: user.organizationId,
             userId: user.id,
             action: 'task_updated',
             entityType: 'task',
             entityId: id,
+            before: existing,
+            after,
           },
-        });
+          tx,
+        );
       }
     });
 
@@ -200,41 +210,47 @@ export class TasksService {
   }
 
   async complete(user: AuthenticatedUser, id: string) {
-    await this.findOwned(user.organizationId, id);
+    const before = await this.findOwned(user.organizationId, id);
     await this.prisma.$transaction(async (tx) => {
-      await tx.task.update({ where: { id }, data: { status: 'COMPLETED', completedAt: new Date() } });
-      await tx.auditLog.create({
-        data: {
+      const after = await tx.task.update({ where: { id }, data: { status: 'COMPLETED', completedAt: new Date() } });
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'task_completed',
           entityType: 'task',
           entityId: id,
+          before,
+          after,
         },
-      });
+        tx,
+      );
     });
     return this.findOwned(user.organizationId, id);
   }
 
   async reschedule(user: AuthenticatedUser, id: string, dto: RescheduleTaskDto) {
-    await this.findOwned(user.organizationId, id);
+    const before = await this.findOwned(user.organizationId, id);
     await this.prisma.$transaction(async (tx) => {
-      await tx.task.update({ where: { id }, data: { dueDate: new Date(dto.dueDate) } });
+      const after = await tx.task.update({ where: { id }, data: { dueDate: new Date(dto.dueDate) } });
       if (dto.reason) {
         await tx.taskComment.create({
           data: { taskId: id, organizationId: user.organizationId, userId: user.id, body: `Rescheduled: ${dto.reason}` },
         });
       }
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'task_rescheduled',
           entityType: 'task',
           entityId: id,
+          before,
+          after,
           metadata: { newDueDate: dto.dueDate },
         },
-      });
+        tx,
+      );
     });
     return this.findOwned(user.organizationId, id);
   }
@@ -332,5 +348,83 @@ export class TasksService {
         productivityPercent: totalActiveToday === 0 ? 0 : Math.round((completedToday / totalActiveToday) * 100),
       },
     };
+  }
+
+  // --- Time tracking ---
+  // A running entry has endedAt = null. Server-persisted from the moment it
+  // starts, so it survives a page refresh or browser crash — unlike the old
+  // Focus Mode page's pure-client setInterval timer. Task.actualMinutes
+  // accumulates every stopped entry's duration rather than being overwritten.
+
+  async getRunningTimer(user: AuthenticatedUser) {
+    return this.prisma.taskTimeEntry.findFirst({
+      where: { organizationId: user.organizationId, userId: user.id, endedAt: null },
+      include: { task: { select: { id: true, title: true, client: { select: { displayName: true } } } } },
+    });
+  }
+
+  async startTimer(user: AuthenticatedUser, taskId: string) {
+    await this.findOwned(user.organizationId, taskId);
+
+    const existing = await this.prisma.taskTimeEntry.findFirst({
+      where: { organizationId: user.organizationId, userId: user.id, endedAt: null },
+    });
+    if (existing) {
+      if (existing.taskId === taskId) return existing; // already running on this task — idempotent, no duplicate entry
+      await this.stopTimerEntry(user, existing); // starting a new timer auto-stops whatever else was running
+    }
+
+    const entry = await this.prisma.taskTimeEntry.create({
+      data: { organizationId: user.organizationId, taskId, userId: user.id, startedAt: new Date() },
+    });
+    await this.audit.log({
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'task_timer_started',
+      entityType: 'task',
+      entityId: taskId,
+      after: entry,
+    });
+    return entry;
+  }
+
+  async stopTimer(user: AuthenticatedUser, taskId: string) {
+    const entry = await this.prisma.taskTimeEntry.findFirst({
+      where: { organizationId: user.organizationId, userId: user.id, taskId, endedAt: null },
+    });
+    if (!entry) throw new ApiError('TIMER_NOT_RUNNING', 'There is no running timer for this task.');
+    return this.stopTimerEntry(user, entry);
+  }
+
+  private async stopTimerEntry(user: AuthenticatedUser, entry: { id: string; taskId: string; startedAt: Date }) {
+    const endedAt = new Date();
+    const durationMinutes = Math.max(0, Math.round((endedAt.getTime() - entry.startedAt.getTime()) / 60000));
+
+    return this.prisma.$transaction(async (tx) => {
+      const after = await tx.taskTimeEntry.update({ where: { id: entry.id }, data: { endedAt, durationMinutes } });
+      const task = await tx.task.findUniqueOrThrow({ where: { id: entry.taskId }, select: { actualMinutes: true } });
+      await tx.task.update({ where: { id: entry.taskId }, data: { actualMinutes: (task.actualMinutes ?? 0) + durationMinutes } });
+      await this.audit.log(
+        {
+          organizationId: user.organizationId,
+          userId: user.id,
+          action: 'task_timer_stopped',
+          entityType: 'task',
+          entityId: entry.taskId,
+          after,
+          metadata: { durationMinutes },
+        },
+        tx,
+      );
+      return after;
+    });
+  }
+
+  async listTimeEntries(organizationId: string, taskId: string) {
+    return this.prisma.taskTimeEntry.findMany({
+      where: { organizationId, taskId },
+      orderBy: { startedAt: 'desc' },
+      include: { user: { select: { id: true, fullName: true } } },
+    });
   }
 }

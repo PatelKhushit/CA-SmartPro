@@ -4,7 +4,7 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, Calendar, CheckCircle2, Circle, Clock, User } from "lucide-react";
-import { useTask, useCompleteTask, useToggleChecklistItem, useAddTaskComment, useRescheduleTask } from "@/hooks/use-tasks";
+import { useTask, useCompleteTask, useToggleChecklistItem, useAddTaskComment, useRescheduleTask, useTaskTimeEntries } from "@/hooks/use-tasks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ export default function TaskDetailPage() {
   const toggleChecklist = useToggleChecklistItem(params.id);
   const addComment = useAddTaskComment(params.id);
   const reschedule = useRescheduleTask(params.id);
+  const { data: timeEntries } = useTaskTimeEntries(params.id);
   const [commentText, setCommentText] = React.useState("");
   const [rescheduleDate, setRescheduleDate] = React.useState("");
 
@@ -138,6 +139,33 @@ export default function TaskDetailPage() {
                 </span>
               </label>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {(task.actualMinutes || (timeEntries && timeEntries.length > 0)) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Time log{task.actualMinutes ? ` · ${Math.floor(task.actualMinutes / 60)}h ${task.actualMinutes % 60}m total` : ""}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {!timeEntries || timeEntries.length === 0 ? (
+              <p className="text-sm text-muted">No completed time entries yet.</p>
+            ) : (
+              timeEntries.map((entry) => (
+                <div key={entry.id} className="flex items-center justify-between text-sm">
+                  <span className="text-foreground">
+                    {entry.user.fullName} · {new Date(entry.startedAt).toLocaleString()}
+                    {entry.endedAt ? ` – ${new Date(entry.endedAt).toLocaleTimeString()}` : " (running)"}
+                  </span>
+                  <span className="text-muted">
+                    {entry.durationMinutes !== null ? `${entry.durationMinutes} min` : "—"}
+                  </span>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       )}

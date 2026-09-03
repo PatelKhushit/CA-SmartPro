@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type { PaginatedResult } from "@/lib/types/client";
-import type { TaskDetail, TaskListItem, TaskTemplate } from "@/lib/types/task";
+import type { RunningTimer, TaskDetail, TaskListItem, TaskTemplate, TaskTimeEntry } from "@/lib/types/task";
 
 export interface TaskListFilters {
   status?: string;
@@ -75,6 +75,7 @@ export interface CreateTaskInput {
   category?: string;
   priority?: string;
   dueDate?: string;
+  startDate?: string;
   estimatedMinutes?: number;
   assignedUserId?: string;
   checklistItems?: string[];
@@ -126,6 +127,50 @@ export function useAddTaskComment(taskId: string) {
   return useMutation({
     mutationFn: (body: string) => api.post<TaskDetail>(`/tasks/${taskId}/comments`, { body }),
     onSuccess: invalidate,
+  });
+}
+
+// --- Time tracking ---
+
+export function useRunningTimer() {
+  return useQuery({
+    queryKey: ["tasks", "timer", "running"],
+    // A 200 with no running timer comes back as an empty body (Nest sends no
+    // content for a `null` return), which api-client parses as `undefined` —
+    // coerce back to `null` since React Query rejects `undefined` query data.
+    queryFn: () => api.get<RunningTimer | null>("/tasks/timer/running").then((v) => v ?? null),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useStartTimer(taskId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<TaskTimeEntry>(`/tasks/${taskId}/timer/start`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tasks", "timer", "running"] });
+    },
+  });
+}
+
+export function useStopTimer(taskId: string) {
+  const invalidate = useInvalidateTasks();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<TaskTimeEntry>(`/tasks/${taskId}/timer/stop`),
+    onSuccess: () => {
+      invalidate();
+      void queryClient.invalidateQueries({ queryKey: ["tasks", "timer", "running"] });
+      void queryClient.invalidateQueries({ queryKey: ["tasks", taskId, "time-entries"] });
+    },
+  });
+}
+
+export function useTaskTimeEntries(taskId: string | undefined) {
+  return useQuery({
+    queryKey: ["tasks", taskId, "time-entries"],
+    queryFn: () => api.get<TaskTimeEntry[]>(`/tasks/${taskId}/time-entries`),
+    enabled: !!taskId,
   });
 }
 

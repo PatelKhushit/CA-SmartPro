@@ -19,6 +19,12 @@ export class TasksController {
   }
 
   @RequirePermissions('tasks.view')
+  @Get('timer/running')
+  getRunningTimer(@CurrentUser() user: AuthenticatedUser) {
+    return this.tasksService.getRunningTimer(user);
+  }
+
+  @RequirePermissions('tasks.view')
   @Get()
   list(@CurrentUser() user: AuthenticatedUser, @Query() query: ListTasksDto) {
     return this.tasksService.list(user.organizationId, query);
@@ -84,5 +90,23 @@ export class TasksController {
   @Post(':id/comments')
   addComment(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: AddCommentDto) {
     return this.tasksService.addComment(user, id, dto);
+  }
+
+  @RequirePermissions('tasks.edit')
+  @Post(':id/timer/start')
+  startTimer(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.tasksService.startTimer(user, id);
+  }
+
+  @RequirePermissions('tasks.edit')
+  @Post(':id/timer/stop')
+  stopTimer(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.tasksService.stopTimer(user, id);
+  }
+
+  @RequirePermissions('tasks.view')
+  @Get(':id/time-entries')
+  listTimeEntries(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.tasksService.listTimeEntries(user.organizationId, id);
   }
 }

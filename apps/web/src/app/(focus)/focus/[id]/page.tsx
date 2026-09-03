@@ -4,7 +4,7 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CheckCircle2, Pause, Play, X } from "lucide-react";
-import { useTask, useCompleteTask, useToggleChecklistItem, useUpdateTask, useRescheduleTask, useAddTaskComment } from "@/hooks/use-tasks";
+import { useTask, useCompleteTask, useToggleChecklistItem, useRescheduleTask, useAddTaskComment, useRunningTimer, useStartTimer, useStopTimer } from "@/hooks/use-tasks";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -27,28 +27,55 @@ export default function FocusModePage() {
   const router = useRouter();
   const { data: task, isLoading, isError, refetch } = useTask(params.id);
   const completeTask = useCompleteTask();
-  const updateTask = useUpdateTask(params.id);
   const toggleChecklist = useToggleChecklistItem(params.id);
   const rescheduleTask = useRescheduleTask(params.id);
   const addComment = useAddTaskComment(params.id);
 
+  // Real, server-persisted timer — startedAt lives in the database, so unlike a
+  // plain setInterval this survives a page refresh or a crashed tab instead of
+  // silently losing the elapsed time.
+  const { data: runningTimer } = useRunningTimer();
+  const startTimer = useStartTimer(params.id);
+  const stopTimer = useStopTimer(params.id);
+  const hasRequestedStart = React.useRef(false);
+
   const [elapsed, setElapsed] = React.useState(0);
-  const [running, setRunning] = React.useState(true);
   const [note, setNote] = React.useState("");
   const [rescheduleDate, setRescheduleDate] = React.useState("");
   const [showReschedule, setShowReschedule] = React.useState(false);
 
+  const isRunningHere = runningTimer?.taskId === params.id;
+
+  // Entering focus mode starts (or resumes) this task's timer exactly once —
+  // transparently switching away from whatever else was running, matching the
+  // "I'm working on this now" intent of opening Focus Mode.
   React.useEffect(() => {
-    if (!running) return;
-    const interval = setInterval(() => setElapsed((s) => s + 1), 1000);
+    if (hasRequestedStart.current || runningTimer === undefined) return;
+    hasRequestedStart.current = true;
+    if (runningTimer?.taskId !== params.id) startTimer.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runningTimer]);
+
+  React.useEffect(() => {
+    if (!isRunningHere || !runningTimer) return;
+    const anchor = new Date(runningTimer.startedAt).getTime();
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - anchor) / 1000)));
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [running]);
+  }, [isRunningHere, runningTimer]);
+
+  const togglePause = () => {
+    if (isRunningHere) {
+      stopTimer.mutate();
+    } else {
+      startTimer.mutate();
+    }
+  };
 
   const handleComplete = async () => {
     try {
-      if (elapsed > 0) {
-        await updateTask.mutateAsync({ actualMinutes: Math.max(1, Math.round(elapsed / 60)) });
-      }
+      if (isRunningHere) await stopTimer.mutateAsync();
       await completeTask.mutateAsync(params.id);
       toast.success("Task completed. Nice work.");
       router.push("/my-day");
@@ -118,8 +145,8 @@ export default function FocusModePage() {
 
       <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface py-8">
         <p className="font-mono text-5xl font-semibold tabular-nums text-foreground">{formatElapsed(elapsed)}</p>
-        <Button variant="outline" size="sm" onClick={() => setRunning((r) => !r)}>
-          {running ? (
+        <Button variant="outline" size="sm" onClick={togglePause} disabled={startTimer.isPending || stopTimer.isPending}>
+          {isRunningHere ? (
             <>
               <Pause className="h-4 w-4" /> Pause
             </>
@@ -129,6 +156,7 @@ export default function FocusModePage() {
             </>
           )}
         </Button>
+        {task.actualMinutes ? <p className="text-xs text-muted">{task.actualMinutes} min logged on this task in total</p> : null}
       </div>
 
       {task.description && <p className="text-sm text-foreground">{task.description}</p>}

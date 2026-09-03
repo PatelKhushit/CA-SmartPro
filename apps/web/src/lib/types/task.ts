@@ -38,7 +38,25 @@ export interface TaskDetail extends TaskListItem {
   startDate: string | null;
   frequency: TaskFrequency;
   completedAt: string | null;
+  actualMinutes: number | null;
   comments: TaskComment[];
+}
+
+export interface TaskTimeEntry {
+  id: string;
+  taskId: string;
+  userId: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationMinutes: number | null;
+  user: { id: string; fullName: string };
+}
+
+export interface RunningTimer {
+  id: string;
+  taskId: string;
+  startedAt: string;
+  task: { id: string; title: string; client: { displayName: string } | null };
 }
 
 export interface TaskTemplate {
