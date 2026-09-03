@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
+import { PwaRegister } from "@/components/pwa-register";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,6 +17,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CA SmartPro",
   description: "Your Practice. Your Productivity. Your Growth. — the practice operating system for Chartered Accountant firms.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CA SmartPro",
+  },
+  icons: {
+    apple: "/icons/icon-192.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0D1B2A",
 };
 
 // Runs before hydration so the correct theme applies on first paint — no
@@ -48,6 +62,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+        <PwaRegister />
         <Providers>{children}</Providers>
       </body>
     </html>
