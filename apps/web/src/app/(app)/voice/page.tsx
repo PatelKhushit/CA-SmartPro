@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { ApiClientError } from "@/lib/api-client";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { PendingActionCard } from "@/components/ai/pending-action-card";
 
 // The Web Speech API isn't in TypeScript's DOM lib — these are the minimal
 // shapes this page actually uses, not a claim of full spec coverage.
@@ -53,7 +54,7 @@ export default function VoiceAssistantPage() {
   const resolvedId = activeId ?? conversations?.[0]?.id;
   const createConversation = useCreateAiConversation();
   const { data: conversation } = useAiConversation(resolvedId);
-  const sendMessage = useSendAiMessage(resolvedId ?? "");
+  const sendMessage = useSendAiMessage();
 
   const [supported, setSupported] = React.useState<boolean | null>(null);
   const [listening, setListening] = React.useState(false);
@@ -123,7 +124,7 @@ export default function VoiceAssistantPage() {
     }
     setDraft("");
     try {
-      await sendMessage.mutateAsync({ text: text.trim(), source });
+      await sendMessage.mutateAsync({ conversationId: convId, text: text.trim(), source });
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : "We couldn't reach the AI Copilot.");
     }
@@ -179,6 +180,9 @@ export default function VoiceAssistantPage() {
                     {m.toolName && <p className="mt-1 text-[10px] opacity-70">via {m.toolName.replace(/,/g, ", ")}</p>}
                   </div>
                 </div>
+              ))}
+              {conversation.pendingActions?.map((action) => (
+                <PendingActionCard key={action.id} action={action} conversationId={conversation.id} />
               ))}
               {sendMessage.isPending && <div className="flex justify-start"><div className="rounded-xl bg-muted-surface px-4 py-2 text-sm text-muted">Thinking…</div></div>}
             </div>

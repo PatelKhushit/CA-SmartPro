@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { ConflictApiError, NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import type { CreateClientDto } from './dto/create-client.dto.js';
@@ -16,7 +17,10 @@ async function nextClientCode(prisma: PrismaService, organizationId: string): Pr
 
 @Injectable()
 export class ClientsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(organizationId: string, query: ListClientsDto) {
     const where: Prisma.ClientWhereInput = {
@@ -37,10 +41,20 @@ export class ClientsService {
         : {}),
     };
 
+    const sortDir = query.sortDir ?? 'desc';
+    const orderBy: Prisma.ClientOrderByWithRelationInput =
+      query.sortBy === 'taskCount'
+        ? { tasks: { _count: sortDir } }
+        : query.sortBy === 'displayName'
+          ? { displayName: sortDir }
+          : query.sortBy === 'status'
+            ? { status: sortDir }
+            : { createdAt: sortDir };
+
     const [items, total] = await Promise.all([
       this.prisma.client.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         include: {
@@ -92,6 +106,7 @@ export class ClientsService {
               pan: dto.pan,
               gstin: dto.gstin,
               tan: dto.tan,
+              cinOrLlpin: dto.cinOrLlpin,
               email: dto.email,
               phone: dto.phone,
               addressLine1: dto.addressLine1,
@@ -103,15 +118,17 @@ export class ClientsService {
               notes: dto.notes,
             },
           });
-          await tx.auditLog.create({
-            data: {
+          await this.audit.log(
+            {
               organizationId: user.organizationId,
               userId: user.id,
               action: 'client_created',
               entityType: 'client',
               entityId: created.id,
+              after: created,
             },
-          });
+            tx,
+          );
           return created;
         });
         return this.findOwned(user.organizationId, client.id);
@@ -133,19 +150,22 @@ export class ClientsService {
   }
 
   async update(user: AuthenticatedUser, id: string, dto: UpdateClientDto) {
-    await this.findOwned(user.organizationId, id);
+    const before = await this.findOwned(user.organizationId, id);
     try {
       await this.prisma.$transaction(async (tx) => {
-        await tx.client.update({ where: { id }, data: dto });
-        await tx.auditLog.create({
-          data: {
+        const after = await tx.client.update({ where: { id }, data: dto });
+        await this.audit.log(
+          {
             organizationId: user.organizationId,
             userId: user.id,
             action: 'client_updated',
             entityType: 'client',
             entityId: id,
+            before,
+            after,
           },
-        });
+          tx,
+        );
       });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -160,21 +180,23 @@ export class ClientsService {
   }
 
   async archive(user: AuthenticatedUser, id: string) {
-    await this.findOwned(user.organizationId, id);
+    const before = await this.findOwned(user.organizationId, id);
     await this.prisma.$transaction(async (tx) => {
       await tx.client.update({
         where: { id },
         data: { status: 'ARCHIVED', deletedAt: new Date() },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'client_archived',
           entityType: 'client',
           entityId: id,
+          before,
         },
-      });
+        tx,
+      );
     });
     return { message: 'Client archived.' };
   }

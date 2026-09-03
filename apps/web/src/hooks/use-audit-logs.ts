@@ -6,6 +6,9 @@ export interface AuditLogEntry {
   action: string;
   entityType: string | null;
   entityId: string | null;
+  beforeValue: unknown;
+  afterValue: unknown;
+  metadata: unknown;
   createdAt: string;
   user: { fullName: string } | null;
 }

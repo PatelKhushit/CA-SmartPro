@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { ConflictApiError, NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import type { CreateTdsProfileDto, UpdateTdsProfileDto } from './dto/tds-profile.dto.js';
@@ -21,7 +22,10 @@ const RETURN_INCLUDE = {
 
 @Injectable()
 export class TdsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   // --- Profiles ---
 
@@ -153,7 +157,7 @@ export class TdsService {
     const completing = dto.status === 'COMPLETED' && existing.status !== 'COMPLETED';
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.tDSReturn.update({
+      const after = await tx.tDSReturn.update({
         where: { id },
         data: {
           dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
@@ -169,16 +173,19 @@ export class TdsService {
           data: { status: 'COMPLETED', completedAt: new Date() },
         });
       }
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'tds_return_updated',
           entityType: 'tds_return',
           entityId: id,
+          before: existing,
+          after,
           metadata: dto.status ? { status: dto.status } : undefined,
         },
-      });
+        tx,
+      );
     });
 
     return this.findOwnedReturn(user.organizationId, id);

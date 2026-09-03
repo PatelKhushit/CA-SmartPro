@@ -8,9 +8,13 @@ import type {
   PaginatedResult,
 } from "@/lib/types/client";
 
+export type ClientSortField = "displayName" | "status" | "createdAt" | "taskCount";
+
 export interface ClientListFilters {
   search?: string;
   status?: string;
+  sortBy?: ClientSortField;
+  sortDir?: "asc" | "desc";
   page?: number;
   pageSize?: number;
 }
@@ -19,6 +23,8 @@ function buildQuery(filters: ClientListFilters) {
   const params = new URLSearchParams();
   if (filters.search) params.set("search", filters.search);
   if (filters.status) params.set("status", filters.status);
+  if (filters.sortBy) params.set("sortBy", filters.sortBy);
+  if (filters.sortDir) params.set("sortDir", filters.sortDir);
   params.set("page", String(filters.page ?? 1));
   params.set("pageSize", String(filters.pageSize ?? 20));
   return params.toString();

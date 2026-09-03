@@ -15,7 +15,7 @@ export function DashboardHeader({ firstName }: { firstName: string }) {
           {greeting()}, {firstName} 👋
         </h1>
         <p className="mt-1 text-sm" style={{ color: "var(--dash-text-secondary)" }}>
-          Stay focused and crush your goals today.
+          Here&apos;s what needs your attention today.
         </p>
       </div>
       <div

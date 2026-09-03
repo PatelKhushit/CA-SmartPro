@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 
 @Injectable()
 export class ComplianceEventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   list(
     organizationId: string,
@@ -43,14 +47,14 @@ export class ComplianceEventsService {
       where: { id },
       data: { status: 'COMPLETED', completedAt: new Date() },
     });
-    await this.prisma.auditLog.create({
-      data: {
-        organizationId: user.organizationId,
-        userId: user.id,
-        action: 'compliance_event_completed',
-        entityType: 'compliance_event',
-        entityId: id,
-      },
+    await this.audit.log({
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'compliance_event_completed',
+      entityType: 'compliance_event',
+      entityId: id,
+      before: event,
+      after: updated,
     });
     return updated;
   }

@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { ConflictApiError, NotFoundApiError } from '../common/errors/api-error.js';
 import { EmailService } from '../email/email.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -10,12 +11,19 @@ import type { AuthenticatedUser } from '../common/interfaces/authenticated-reque
 import type { InviteMemberDto } from './dto/invite-member.dto.js';
 import type { UpdateMemberDto } from './dto/update-member.dto.js';
 
+/** Never let a password hash reach an audit row, even hashed. */
+function sanitizeUser<T extends { passwordHash?: unknown }>(user: T) {
+  const { passwordHash: _passwordHash, ...rest } = user;
+  return rest;
+}
+
 @Injectable()
 export class TeamService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly email: EmailService,
     private readonly config: ConfigService,
+    private readonly audit: AuditService,
   ) {}
 
   async listRoles() {
@@ -142,16 +150,18 @@ export class TeamService {
           expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000),
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'team_member_invited',
           entityType: 'user',
           entityId: newUser.id,
+          after: sanitizeUser(newUser),
           metadata: { email, roleKey: dto.roleKey },
         },
-      });
+        tx,
+      );
       return { newUser, token };
     });
 
@@ -186,20 +196,23 @@ export class TeamService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: memberId }, data: { roleId, status: dto.status } });
+      const updated = await tx.user.update({ where: { id: memberId }, data: { roleId, status: dto.status } });
       if (dto.status === 'SUSPENDED') {
         await tx.refreshSession.updateMany({ where: { userId: memberId, revokedAt: null }, data: { revokedAt: new Date() } });
       }
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'team_member_updated',
           entityType: 'user',
           entityId: memberId,
+          before: sanitizeUser(member),
+          after: sanitizeUser(updated),
           metadata: { roleKey: dto.roleKey, status: dto.status },
         },
-      });
+        tx,
+      );
     });
 
     return { message: 'Team member updated.' };

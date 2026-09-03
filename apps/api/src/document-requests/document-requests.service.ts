@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DocumentRequestItemStatus, DocumentRequestStatus, Prisma, ServiceCategory } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { ApiError, NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import { DOCUMENT_REQUEST_TEMPLATES } from './document-request-templates.js';
@@ -32,7 +33,10 @@ function computeStatus(items: Array<{ isRequired: boolean; status: DocumentReque
 
 @Injectable()
 export class DocumentRequestsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   getTemplates(category?: ServiceCategory) {
     if (category) {
@@ -105,16 +109,18 @@ export class DocumentRequestsService {
           })),
         });
       }
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'document_request_created',
           entityType: 'document_request',
           entityId: request.id,
+          after: request,
           metadata: { title: request.title, itemCount: dto.items?.length ?? 0 },
         },
-      });
+        tx,
+      );
       return request;
     });
 
@@ -135,18 +141,20 @@ export class DocumentRequestsService {
   }
 
   async cancel(user: AuthenticatedUser, id: string) {
-    await this.findOwned(user.organizationId, id);
+    const before = await this.findOwned(user.organizationId, id);
     await this.prisma.$transaction(async (tx) => {
       await tx.documentRequest.update({ where: { id }, data: { status: 'CANCELLED' } });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'document_request_cancelled',
           entityType: 'document_request',
           entityId: id,
+          before,
         },
-      });
+        tx,
+      );
     });
     return this.findOwned(user.organizationId, id);
   }
@@ -213,16 +221,18 @@ export class DocumentRequestsService {
         data: { status: 'UPLOADED', documentId: dto.documentId },
       });
       await this.recomputeStatus(tx, requestId);
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'document_request_item_fulfilled',
           entityType: 'document_request',
           entityId: requestId,
+          before: item,
           metadata: { itemId, documentId: dto.documentId },
         },
-      });
+        tx,
+      );
     });
 
     return this.findOwned(user.organizationId, requestId);
@@ -245,16 +255,19 @@ export class DocumentRequestsService {
         data: { status: dto.status, notes: dto.notes },
       });
       await this.recomputeStatus(tx, requestId);
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'document_request_item_reviewed',
           entityType: 'document_request',
           entityId: requestId,
-          metadata: { itemId, status: dto.status },
+          before: { status: item.status },
+          after: { status: dto.status },
+          metadata: { itemId },
         },
-      });
+        tx,
+      );
     });
 
     return this.findOwned(user.organizationId, requestId);

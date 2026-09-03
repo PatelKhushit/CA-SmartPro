@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import type { CreateAutomationRuleDto, UpdateAutomationRuleDto } from './dto/automation-rule.dto.js';
 
 @Injectable()
 export class AutomationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   list(organizationId: string) {
     return this.prisma.automationRule.findMany({
@@ -41,16 +45,18 @@ export class AutomationsService {
           createdByUserId: user.id,
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'automation_rule_created',
           entityType: 'automation_rule',
           entityId: rule.id,
+          after: rule,
           metadata: { name: rule.name, triggerType: rule.triggerType },
         },
-      });
+        tx,
+      );
       return rule;
     });
     return created;

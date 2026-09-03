@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { ApiError, ConflictApiError, NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import type { CreateUdinDto } from './dto/create-udin.dto.js';
@@ -15,7 +16,10 @@ const UDIN_INCLUDE = {
 
 @Injectable()
 export class UdinService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(organizationId: string, query: ListUdinDto) {
     const where: Prisma.UDINRecordWhereInput = {
@@ -89,15 +93,17 @@ export class UdinService {
           createdByUserId: user.id,
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'udin_record_created',
           entityType: 'udin_record',
           entityId: record.id,
+          after: record,
         },
-      });
+        tx,
+      );
       return record;
     });
 
@@ -122,7 +128,7 @@ export class UdinService {
   }
 
   async update(user: AuthenticatedUser, id: string, dto: UpdateUdinDto) {
-    await this.findOwned(user.organizationId, id);
+    const before = await this.findOwned(user.organizationId, id);
 
     if (dto.status === 'VERIFIED' && !dto.udinNumber) {
       const existing = await this.prisma.uDINRecord.findUnique({ where: { id }, select: { udinNumber: true } });
@@ -133,7 +139,7 @@ export class UdinService {
 
     try {
       await this.prisma.$transaction(async (tx) => {
-        await tx.uDINRecord.update({
+        const after = await tx.uDINRecord.update({
           where: { id },
           data: {
             documentType: dto.documentType,
@@ -146,15 +152,18 @@ export class UdinService {
             notes: dto.notes,
           },
         });
-        await tx.auditLog.create({
-          data: {
+        await this.audit.log(
+          {
             organizationId: user.organizationId,
             userId: user.id,
             action: 'udin_record_updated',
             entityType: 'udin_record',
             entityId: id,
+            before,
+            after,
           },
-        });
+          tx,
+        );
       });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {

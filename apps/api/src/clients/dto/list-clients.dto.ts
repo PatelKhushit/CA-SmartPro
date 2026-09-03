@@ -1,6 +1,9 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ClientStatus } from '@prisma/client';
+
+export const CLIENT_SORT_FIELDS = ['displayName', 'status', 'createdAt', 'taskCount'] as const;
+export type ClientSortField = (typeof CLIENT_SORT_FIELDS)[number];
 
 export class ListClientsDto {
   @IsOptional()
@@ -15,6 +18,14 @@ export class ListClientsDto {
   @IsOptional()
   @IsString()
   assignedUserId?: string;
+
+  @IsOptional()
+  @IsIn(CLIENT_SORT_FIELDS)
+  sortBy?: ClientSortField;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortDir?: 'asc' | 'desc';
 
   @IsOptional()
   @Type(() => Number)

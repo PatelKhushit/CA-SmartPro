@@ -18,6 +18,7 @@ import {
 import { ApiClientError } from "@/lib/api-client";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { toast } from "sonner";
+import { PendingActionCard } from "@/components/ai/pending-action-card";
 
 const SUGGESTIONS = [
   "What are my priority tasks today?",
@@ -34,7 +35,7 @@ export default function CopilotPage() {
   const activeId = selectedId ?? conversations?.[0]?.id;
   const createConversation = useCreateAiConversation();
   const { data: conversation, isLoading: loadingConversation } = useAiConversation(activeId);
-  const sendMessage = useSendAiMessage(activeId ?? "");
+  const sendMessage = useSendAiMessage();
   const [input, setInput] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -57,7 +58,7 @@ export default function CopilotPage() {
     }
     setInput("");
     try {
-      await sendMessage.mutateAsync({ text: text.trim() });
+      await sendMessage.mutateAsync({ conversationId: convId, text: text.trim() });
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : "We couldn't reach the AI Copilot. Please try again.");
     }
@@ -156,6 +157,9 @@ export default function CopilotPage() {
                       {m.toolName && <p className="mt-1 text-[10px] opacity-70">via {m.toolName.replace(/,/g, ", ")}</p>}
                     </div>
                   </div>
+                ))}
+                {conversation.pendingActions?.map((action) => (
+                  <PendingActionCard key={action.id} action={action} conversationId={conversation.id} />
                 ))}
                 {sendMessage.isPending && (
                   <div className="flex justify-start">

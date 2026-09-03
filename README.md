@@ -4,7 +4,7 @@
 
 A multi-tenant Practice Operating System for Chartered Accountant firms in India — clients, recurring compliance work, "My Day" productivity, calendar, calculators, documents, and an AI Copilot, built on real CRUD (no mock data). Internal package/repo name remains `ca-practice-os`.
 
-This repository is being built **phase by phase** against the master spec in `docs/`. Current status: **Phase 1 MVP + Phase 2 Documents/Document Requests** (see `docs/STATUS.md`).
+This repository is being built **phase by phase** against the master spec in `docs/`. Current status: **Phase 1 MVP complete, well into Phase 2** (Documents, GST/TDS/UDIN/Notices/Team/Automations, AI Copilot with confirmed write actions, command palette) — see `docs/STATUS.md` for the accurate module-by-module breakdown.
 
 ## Stack
 

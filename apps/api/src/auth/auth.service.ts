@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { ConflictApiError, UnauthorizedApiError } from '../common/errors/api-error.js';
 import { EmailService } from '../email/email.service.js';
 import type { RegisterDto } from './dto/register.dto.js';
@@ -43,6 +44,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly email: EmailService,
+    private readonly audit: AuditService,
   ) {}
 
   private async issueAccessToken(userId: string, organizationId: string) {
@@ -102,16 +104,19 @@ export class AuthService {
           fullName: dto.fullName,
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: organization.id,
           userId: user.id,
           action: 'organization_created',
           entityType: 'organization',
           entityId: organization.id,
+          after: { organization, user: { id: user.id, email: user.email, fullName: user.fullName } },
           ipAddress: meta.ipAddress,
+          userAgent: meta.userAgent,
         },
-      });
+        tx,
+      );
       return { organization, user };
     });
 
@@ -175,15 +180,14 @@ export class AuthService {
       data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        organizationId: user.organizationId,
-        userId: user.id,
-        action: 'login',
-        entityType: 'user',
-        entityId: user.id,
-        ipAddress: meta.ipAddress,
-      },
+    await this.audit.log({
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'login',
+      entityType: 'user',
+      entityId: user.id,
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
 
     const accessToken = await this.issueAccessToken(user.id, user.organizationId);
@@ -241,14 +245,12 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
     if (session) {
-      await this.prisma.auditLog.create({
-        data: {
-          organizationId: session.organizationId,
-          userId: session.userId,
-          action: 'logout',
-          entityType: 'user',
-          entityId: session.userId,
-        },
+      await this.audit.log({
+        organizationId: session.organizationId,
+        userId: session.userId,
+        action: 'logout',
+        entityType: 'user',
+        entityId: session.userId,
       });
     }
   }

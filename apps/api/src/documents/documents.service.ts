@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { ApiError, ForbiddenApiError, NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import { STORAGE_PROVIDER, type StorageProvider } from './storage/storage-provider.interface.js';
@@ -18,6 +19,7 @@ export class DocumentsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @Inject(STORAGE_PROVIDER) private readonly storage: StorageProvider,
+    private readonly audit: AuditService,
   ) {}
 
   private get maxUploadBytes(): number {
@@ -131,16 +133,18 @@ export class DocumentsService {
           uploadedByUserId: user.id,
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'document_uploaded',
           entityType: 'document',
           entityId: created.id,
+          after: created,
           metadata: { title: created.title, filename: uploaded.originalname },
         },
-      });
+        tx,
+      );
       return created;
     });
 
@@ -175,8 +179,8 @@ export class DocumentsService {
         },
       });
       await tx.document.update({ where: { id: documentId }, data: { updatedAt: new Date() } });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'document_version_uploaded',
@@ -184,7 +188,8 @@ export class DocumentsService {
           entityId: documentId,
           metadata: { versionNumber: nextVersionNumber, filename: uploaded.originalname },
         },
-      });
+        tx,
+      );
     });
 
     return this.findOwned(user.organizationId, documentId);
@@ -197,18 +202,20 @@ export class DocumentsService {
   }
 
   async archive(user: AuthenticatedUser, id: string) {
-    await this.findOwned(user.organizationId, id);
+    const before = await this.findOwned(user.organizationId, id);
     await this.prisma.$transaction(async (tx) => {
       await tx.document.update({ where: { id }, data: { status: 'ARCHIVED', deletedAt: new Date() } });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'document_archived',
           entityType: 'document',
           entityId: id,
+          before,
         },
-      });
+        tx,
+      );
     });
     return { message: 'Document archived.' };
   }
@@ -228,15 +235,13 @@ export class DocumentsService {
       this.config.get<string>('storage.signingSecret')!,
     );
 
-    await this.prisma.auditLog.create({
-      data: {
-        organizationId: user.organizationId,
-        userId: user.id,
-        action: 'document_downloaded',
-        entityType: 'document',
-        entityId: documentId,
-        metadata: { versionId, filename: version.originalFilename },
-      },
+    await this.audit.log({
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'document_downloaded',
+      entityType: 'document',
+      entityId: documentId,
+      metadata: { versionId, filename: version.originalFilename },
     });
 
     return { token, expiresAt: new Date(exp * 1000).toISOString(), filename: version.originalFilename };

@@ -9,7 +9,7 @@ interface StatCardProps {
   subtitleTone?: "success" | "warning" | "muted";
   /** 0-100. When set, renders a thin progress bar under the value. */
   progress?: number;
-  accent?: "accent" | "success" | "warning";
+  accent?: "accent" | "success" | "warning" | "danger";
 }
 
 const TONE_COLOR: Record<NonNullable<StatCardProps["subtitleTone"]>, string> = {
@@ -22,12 +22,14 @@ const ACCENT_VAR: Record<NonNullable<StatCardProps["accent"]>, string> = {
   accent: "var(--dash-accent)",
   success: "var(--dash-success)",
   warning: "var(--dash-warning)",
+  danger: "var(--dash-danger)",
 };
 
 const ACCENT_BG_VAR: Record<NonNullable<StatCardProps["accent"]>, string> = {
   accent: "var(--dash-accent-bg)",
   success: "var(--dash-success-bg)",
   warning: "var(--dash-warning-bg)",
+  danger: "var(--dash-danger-bg)",
 };
 
 export function StatCard({

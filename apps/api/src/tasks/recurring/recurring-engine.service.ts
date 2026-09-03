@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
+import { AuditService } from '../../audit/audit.service.js';
 import { getDueDate, getPeriodKey } from '../../common/period/period.util.js';
 
 export interface GenerationSummary {
@@ -13,7 +14,10 @@ export interface GenerationSummary {
 export class RecurringEngineService {
   private readonly logger = new Logger(RecurringEngineService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   /** Runs the engine for every organization. Safe to call repeatedly — idempotent by design. */
   async generateAll(referenceDate: Date = new Date()): Promise<GenerationSummary> {
@@ -130,15 +134,17 @@ export class RecurringEngineService {
             data: checklistTitles.map((title, index) => ({ taskId: task.id, title, order: index })),
           });
         }
-        await tx.auditLog.create({
-          data: {
+        await this.audit.log(
+          {
             organizationId,
             action: 'task_generated',
             entityType: 'task',
             entityId: task.id,
-            metadata: { templateId: template.id, periodKey },
+            after: task,
+            metadata: { templateId: template.id, periodKey, source: 'recurring_engine' },
           },
-        });
+          tx,
+        );
       });
       return true;
     } catch (err) {

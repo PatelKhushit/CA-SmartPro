@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { NotFoundApiError } from '../common/errors/api-error.js';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-request.interface.js';
 import type { CreateNoticeDto } from './dto/create-notice.dto.js';
@@ -19,7 +20,10 @@ const NOTICE_INCLUDE = {
 
 @Injectable()
 export class NoticesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(organizationId: string, query: ListNoticesDto) {
     const where: Prisma.NoticeWhereInput = {
@@ -113,16 +117,18 @@ export class NoticesService {
           createdByUserId: user.id,
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'notice_created',
           entityType: 'notice',
           entityId: notice.id,
+          after: notice,
           metadata: { referenceNumber: notice.referenceNumber, noticeType: notice.noticeType },
         },
-      });
+        tx,
+      );
       return notice;
     });
 
@@ -150,16 +156,18 @@ export class NoticesService {
         },
       });
       if (dto.status && dto.status !== existing.status) {
-        await tx.auditLog.create({
-          data: {
+        await this.audit.log(
+          {
             organizationId: user.organizationId,
             userId: user.id,
             action: 'notice_status_changed',
             entityType: 'notice',
             entityId: id,
-            metadata: { from: existing.status, to: dto.status },
+            before: { status: existing.status },
+            after: { status: dto.status },
           },
-        });
+          tx,
+        );
       }
     });
 
@@ -219,16 +227,18 @@ export class NoticesService {
           createdByUserId: user.id,
         },
       });
-      await tx.auditLog.create({
-        data: {
+      await this.audit.log(
+        {
           organizationId: user.organizationId,
           userId: user.id,
           action: 'notice_task_created',
           entityType: 'notice',
           entityId: id,
+          after: task,
           metadata: { taskId: task.id },
         },
-      });
+        tx,
+      );
     });
 
     return this.findOwned(user.organizationId, id);

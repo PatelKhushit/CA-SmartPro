@@ -7,10 +7,13 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  FileText,
   Flame,
   ListChecks,
+  ShieldCheck,
   Target,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -19,6 +22,7 @@ import { useMyDay } from "@/hooks/use-tasks";
 import { useGoals, useDeleteGoal } from "@/hooks/use-goals";
 import { useClients } from "@/hooks/use-clients";
 import { useMonthlyReport } from "@/hooks/use-reports";
+import { useDocumentRequests } from "@/hooks/use-document-requests";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,18 +33,16 @@ import { ErrorState } from "@/components/ui/error-state";
 import { NewGoalDialog, GOAL_TYPE_LABELS } from "@/components/my-day/new-goal-dialog";
 import { PRIORITY_MAP, effectiveTaskStatus } from "@/lib/status";
 import { RecentClientsCard } from "@/components/dashboard/recent-clients-card";
-import { AiCopilotCard } from "@/components/dashboard/ai-copilot-card";
+import { AiCopilotCard, type AiInsightHighlight } from "@/components/dashboard/ai-copilot-card";
 import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
+import { ComplianceSnapshotCard } from "@/components/dashboard/compliance-snapshot-card";
+import { ClientAttentionCard } from "@/components/dashboard/client-attention-card";
 import { DashboardHeader } from "@/components/dashboard/premium/dashboard-header";
 import { StatCard, StatCardSkeleton } from "@/components/dashboard/premium/stat-card";
 import { TaskProgressDonut } from "@/components/dashboard/premium/task-progress-donut";
 import { RecentTasksPanel } from "@/components/dashboard/premium/recent-tasks-panel";
 import { MonthlyOverviewChart } from "@/components/dashboard/premium/monthly-overview-chart";
 import { UpcomingRemindersPanel } from "@/components/dashboard/premium/upcoming-reminders-panel";
-import { ThemeOptionsPanel } from "@/components/dashboard/premium/theme-options-panel";
-import { ColorPaletteSection } from "@/components/dashboard/premium/color-palette-section";
-import { KeyFeaturesSection } from "@/components/dashboard/premium/key-features-section";
-import { BrandingBenefitsSection } from "@/components/dashboard/premium/branding-benefits-section";
 
 function currentMonthKey() {
   const d = new Date();
@@ -63,6 +65,8 @@ export default function MyDayPage() {
   const { t } = useLanguage();
   const { data, isLoading, isError, refetch } = useMyDay();
   const { data: clientsPage } = useClients({ status: "ACTIVE", pageSize: 1 });
+  const { data: pendingDocRequests } = useDocumentRequests({ status: "PENDING", pageSize: 1 });
+  const { data: partialDocRequests } = useDocumentRequests({ status: "PARTIAL", pageSize: 1 });
   const { data: monthlyReport } = useMonthlyReport(currentMonthKey());
   const { data: lastMonthReport } = useMonthlyReport(
     (() => {
@@ -126,6 +130,23 @@ export default function MyDayPage() {
         ? "No change this month"
         : `${clientDelta > 0 ? "+" : ""}${clientDelta} this month`;
 
+  const pendingDocumentsTotal = (pendingDocRequests?.total ?? 0) + (partialDocRequests?.total ?? 0);
+
+  const highlights: AiInsightHighlight[] = [
+    data.counts.overdue > 0
+      ? { text: `${data.counts.overdue} task${data.counts.overdue === 1 ? "" : "s"} overdue.`, href: "/tasks" }
+      : null,
+    pendingDocumentsTotal > 0
+      ? {
+          text: `${pendingDocumentsTotal} client document request${pendingDocumentsTotal === 1 ? "" : "s"} still pending.`,
+          href: "/document-requests",
+        }
+      : null,
+    data.counts.complianceDue > 0
+      ? { text: `${data.counts.complianceDue} compliance item${data.counts.complianceDue === 1 ? "" : "s"} due today.`, href: "/compliance" }
+      : null,
+  ].filter((h): h is AiInsightHighlight => h !== null);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Premium dashboard — follows the app's real light-dominant, navy-
@@ -134,13 +155,17 @@ export default function MyDayPage() {
           .dashboard-shell, plus a user-selectable accent. Legacy workspace
           sections below use the app's normal theme classes directly, so both
           stay visually consistent with each other and the rest of the app. */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-4">
           <DashboardHeader firstName={firstName} />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {isLoading ? (
               <>
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
                 <StatCardSkeleton />
                 <StatCardSkeleton />
                 <StatCardSkeleton />
@@ -157,6 +182,14 @@ export default function MyDayPage() {
                   subtitleTone="muted"
                 />
                 <StatCard
+                  icon={Flame}
+                  label="Overdue Tasks"
+                  value={String(data.counts.overdue)}
+                  subtitle={data.counts.overdue > 0 ? "Needs attention" : "None overdue"}
+                  subtitleTone={data.counts.overdue > 0 ? "warning" : "success"}
+                  accent="danger"
+                />
+                <StatCard
                   icon={Target}
                   label="Daily Accuracy"
                   value={`${dailyAccuracy}%`}
@@ -165,20 +198,44 @@ export default function MyDayPage() {
                   accent="success"
                 />
                 <StatCard
-                  icon={Flame}
-                  label="Monthly Accuracy"
-                  value={`${monthlyAccuracy}%`}
-                  subtitle={monthlyTone.text}
-                  subtitleTone={monthlyTone.tone}
-                  accent="accent"
-                />
-                <StatCard
                   icon={Users}
                   label="Active Clients"
                   value={String(activeClients)}
                   subtitle={clientSubtitle}
                   subtitleTone={clientDelta && clientDelta > 0 ? "success" : "muted"}
                   accent="warning"
+                />
+                <StatCard
+                  icon={ShieldCheck}
+                  label="Upcoming Compliance"
+                  value={String(data.counts.complianceDue)}
+                  subtitle={data.counts.complianceDue > 0 ? "Due today" : "Nothing due today"}
+                  subtitleTone={data.counts.complianceDue > 0 ? "warning" : "muted"}
+                  accent="accent"
+                />
+                <StatCard
+                  icon={FileText}
+                  label="Pending Documents"
+                  value={String(pendingDocumentsTotal)}
+                  subtitle={pendingDocumentsTotal > 0 ? "Awaiting client" : "All caught up"}
+                  subtitleTone={pendingDocumentsTotal > 0 ? "warning" : "muted"}
+                  accent="warning"
+                />
+                <StatCard
+                  icon={Wallet}
+                  label="Payment Tasks"
+                  value={String(data.counts.paymentTasks)}
+                  subtitle="Open payment-category tasks"
+                  subtitleTone="muted"
+                  accent="accent"
+                />
+                <StatCard
+                  icon={Flame}
+                  label="Monthly Accuracy"
+                  value={`${monthlyAccuracy}%`}
+                  subtitle={monthlyTone.text}
+                  subtitleTone={monthlyTone.tone}
+                  accent="accent"
                 />
               </>
             )}
@@ -193,17 +250,11 @@ export default function MyDayPage() {
             <MonthlyOverviewChart />
             <UpcomingRemindersPanel />
           </div>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <ColorPaletteSection />
-            <KeyFeaturesSection />
-          </div>
-
-          <BrandingBenefitsSection />
         </div>
 
-        <div className="xl:sticky xl:top-6 xl:self-start">
-          <ThemeOptionsPanel />
+        <div className="flex flex-col gap-4 xl:sticky xl:top-6 xl:self-start">
+          {hasPermission("compliance.manage") && <ComplianceSnapshotCard />}
+          <ClientAttentionCard />
         </div>
       </div>
 
@@ -254,7 +305,7 @@ export default function MyDayPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <RecentClientsCard />
-            <AiCopilotCard />
+            <AiCopilotCard highlights={highlights} />
           </div>
 
           <Card>

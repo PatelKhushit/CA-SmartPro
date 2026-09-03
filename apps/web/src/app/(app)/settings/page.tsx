@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { ShieldCheck, ExternalLink, History } from "lucide-react";
+import { ShieldCheck, ExternalLink, History, ChevronDown, ChevronRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api, ApiClientError } from "@/lib/api-client";
 import { SERVICE_CATEGORY_LABELS } from "@/lib/types/client";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { ThemeOptionsPanel } from "@/components/dashboard/premium/theme-options-panel";
 
 const RULE_STATUS_VARIANT = { DRAFT: "upcoming", ACTIVE: "completed", RETIRED: "cancelled" } as const;
 
@@ -37,6 +38,7 @@ export default function SettingsPage() {
           <TabsTrigger value="compliance">Compliance rules</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
           <TabsTrigger value="firm">Firm</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="compliance">
@@ -57,6 +59,12 @@ export default function SettingsPage() {
               </Badge>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="appearance">
+          <div className="max-w-sm">
+            <ThemeOptionsPanel />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -157,6 +165,7 @@ function ComplianceRulesTab() {
 
 function AuditLogTab() {
   const { data: logs, isLoading, isError, refetch } = useAuditLogs();
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
   if (isError) return <ErrorState description="We couldn't load the audit log." onRetry={() => refetch()} />;
@@ -166,6 +175,7 @@ function AuditLogTab() {
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-8" />
           <TableHead>When</TableHead>
           <TableHead>Who</TableHead>
           <TableHead>Action</TableHead>
@@ -173,16 +183,53 @@ function AuditLogTab() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {logs.map((log) => (
-          <TableRow key={log.id}>
-            <TableCell className="text-muted">{new Date(log.createdAt).toLocaleString()}</TableCell>
-            <TableCell>{log.user?.fullName ?? "System"}</TableCell>
-            <TableCell>
-              <Badge variant="neutral">{log.action}</Badge>
-            </TableCell>
-            <TableCell className="text-muted">{log.entityType ?? "—"}</TableCell>
-          </TableRow>
-        ))}
+        {logs.map((log) => {
+          const hasDetails = log.beforeValue !== null || log.afterValue !== null;
+          const expanded = expandedId === log.id;
+          return (
+            <React.Fragment key={log.id}>
+              <TableRow
+                className={hasDetails ? "cursor-pointer" : undefined}
+                onClick={() => hasDetails && setExpandedId(expanded ? null : log.id)}
+              >
+                <TableCell>
+                  {hasDetails &&
+                    (expanded ? <ChevronDown className="h-4 w-4 text-muted" /> : <ChevronRight className="h-4 w-4 text-muted" />)}
+                </TableCell>
+                <TableCell className="text-muted">{new Date(log.createdAt).toLocaleString()}</TableCell>
+                <TableCell>{log.user?.fullName ?? "System"}</TableCell>
+                <TableCell>
+                  <Badge variant="neutral">{log.action}</Badge>
+                </TableCell>
+                <TableCell className="text-muted">{log.entityType ?? "—"}</TableCell>
+              </TableRow>
+              {expanded && hasDetails && (
+                <TableRow>
+                  <TableCell colSpan={5} className="bg-muted-surface/60">
+                    <div className="grid grid-cols-1 gap-3 py-2 sm:grid-cols-2">
+                      {log.beforeValue !== null && (
+                        <div>
+                          <p className="mb-1 text-xs font-medium text-muted">Before</p>
+                          <pre className="max-h-48 overflow-auto rounded-md bg-surface p-2 text-xs text-foreground">
+                            {JSON.stringify(log.beforeValue, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                      {log.afterValue !== null && (
+                        <div>
+                          <p className="mb-1 text-xs font-medium text-muted">After</p>
+                          <pre className="max-h-48 overflow-auto rounded-md bg-surface p-2 text-xs text-foreground">
+                            {JSON.stringify(log.afterValue, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
+          );
+        })}
       </TableBody>
     </Table>
   );

@@ -41,6 +41,7 @@ export interface ClientListItem {
   status: ClientStatus;
   gstin: string | null;
   pan: string | null;
+  cinOrLlpin: string | null;
   assignedUser: { id: string; fullName: string } | null;
   services: { category: ServiceCategory }[];
   _count: { services: number; tasks: number };
