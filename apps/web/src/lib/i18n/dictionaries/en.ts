@@ -52,10 +52,13 @@ export const en = {
       notices: "Notices",
       aiCopilot: "AI Copilot",
       voiceAssistant: "Voice Assistant",
+      knowledgeBase: "Knowledge Base",
       reports: "Reports",
       analytics: "Analytics",
       news: "News",
       team: "Team",
+      attendance: "Attendance",
+      leave: "Leave",
       automations: "Automations",
       settings: "Settings",
     },
@@ -144,11 +147,11 @@ export const en = {
     },
     payments: {
       title: "Payments",
-      description: "Payment tracking, outstanding/overdue balances and a payment gateway integration are planned — no invoice/payment ledger exists yet, so this stays honestly empty rather than showing invented figures.",
+      description: "A firm-wide payments ledger — every payment recorded against an invoice, across all clients.",
     },
     invoices: {
       title: "Invoices",
-      description: "Invoice creation, numbering and receipts are planned alongside the Payments module — not built yet.",
+      description: "Create and track invoices and fee plans, and record payments against them. Internal record-keeping only — no payment gateway integration.",
     },
     calculator: {
       title: "CA Calculator",
@@ -175,7 +178,7 @@ export const en = {
     },
     incomeTax: {
       title: "Income Tax",
-      description: "ITR preparation, AIS/TIS import, tax credit/demand/refund tracking are planned — architected for a configurable tax-year model rather than a hardcoded assessment year.",
+      description: "ITR return preparation and filing status tracking across your clients.",
     },
     audit: {
       title: "Audit",
@@ -183,7 +186,7 @@ export const en = {
     },
     rocMca: {
       title: "ROC / MCA",
-      description: "Company/LLP masters, annual and event-based ROC filings are planned, kept behind a replaceable MCA integration adapter — not built yet.",
+      description: "CIN/LLPIN-linked annual and event-based ROC filing status tracking across your clients.",
     },
     udin: {
       title: "UDIN",
@@ -200,6 +203,10 @@ export const en = {
       title: "Voice Assistant",
       subtitle: "Speak a request — you'll always review the transcript before it's sent.",
     },
+    knowledge: {
+      title: "Knowledge Base",
+      description: "Save firm SOPs and internal notes here — the AI Copilot searches them for real, relevant answers.",
+    },
     reports: {
       title: "Reports",
       description: "Productivity, compliance health, and team workload — computed live, never stale.",
@@ -215,6 +222,14 @@ export const en = {
     team: {
       title: "Team",
       description: "Manage roles, access, and see real-time workload across your firm.",
+    },
+    attendance: {
+      title: "Attendance",
+      description: "Check yourself in and out, and see the team's daily attendance register.",
+    },
+    leave: {
+      title: "Leave",
+      description: "Request leave and track approvals — approved leave shows up on the attendance register automatically.",
     },
     automations: {
       title: "Automations",

@@ -31,32 +31,43 @@ model Organization {
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
-  users             User[]
-  clients           Client[]
-  taskTemplates     TaskTemplate[]
-  tasks             Task[]
-  complianceEvents  ComplianceEvent[]
-  reminders         Reminder[]
-  notifications     Notification[]
-  notificationPrefs NotificationPreference[]
-  goals             Goal[]
-  calendarEvents    CalendarEvent[]
-  aiConversations   AiConversation[]
-  auditLogs         AuditLog[]
-  refreshSessions   RefreshSession[]
-  documents         Document[]
-  documentVersions  DocumentVersion[]
-  documentRequests  DocumentRequest[]
+  users                User[]
+  clients              Client[]
+  taskTemplates        TaskTemplate[]
+  tasks                Task[]
+  complianceEvents     ComplianceEvent[]
+  reminders            Reminder[]
+  notifications        Notification[]
+  notificationPrefs    NotificationPreference[]
+  goals                Goal[]
+  calendarEvents       CalendarEvent[]
+  aiConversations      AiConversation[]
+  auditLogs            AuditLog[]
+  refreshSessions      RefreshSession[]
+  documents            Document[]
+  documentVersions     DocumentVersion[]
+  documentRequests     DocumentRequest[]
   notices              Notice[]
   udinRecords          UDINRecord[]
   gstProfiles          GSTProfile[]
   gstReturns           GSTReturn[]
   tdsProfiles          TDSProfile[]
   tdsReturns           TDSReturn[]
+  itrReturns           ITRReturn[]
+  rocFilings           ROCFiling[]
   tdsChallans          TDSChallan[]
   tdsCertificates      TDSCertificate[]
+  feePlans             FeePlan[]
+  invoices             Invoice[]
+  payments             Payment[]
+  attendanceRecords    Attendance[]
+  leaveRequests        LeaveRequest[]
+  knowledgeDocuments   KnowledgeDocument[]
+  knowledgeChunks      KnowledgeChunk[]
+  taskTimeEntries      TaskTimeEntry[]
   automationRules      AutomationRule[]
   automationExecutions AutomationExecution[]
+  aiPendingActions     AiPendingAction[]
 
   @@map("organizations")
 }
@@ -68,55 +79,69 @@ enum UserStatus {
 }
 
 model User {
-  id              String     @id @default(cuid())
-  organizationId  String
-  roleId          String
-  email           String     @unique
-  passwordHash    String
-  fullName        String
-  phone           String?
-  status          UserStatus @default(ACTIVE)
-  emailVerifiedAt DateTime?
-  lastLoginAt     DateTime?
-  failedLoginCount Int       @default(0)
-  lockedUntil     DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  deletedAt       DateTime?
+  id               String     @id @default(cuid())
+  organizationId   String
+  roleId           String
+  email            String     @unique
+  passwordHash     String
+  fullName         String
+  phone            String?
+  status           UserStatus @default(ACTIVE)
+  emailVerifiedAt  DateTime?
+  lastLoginAt      DateTime?
+  failedLoginCount Int        @default(0)
+  lockedUntil      DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   role         Role         @relation(fields: [roleId], references: [id])
 
-  assignedClients        Client[]              @relation("ClientAssignedUser")
-  createdClients         Client[]              @relation("ClientCreatedBy")
-  assignedTasks           Task[]                @relation("TaskAssignedUser")
-  createdTasks             Task[]                @relation("TaskCreatedBy")
+  assignedClients          Client[]                 @relation("ClientAssignedUser")
+  createdClients           Client[]                 @relation("ClientCreatedBy")
+  assignedTasks            Task[]                   @relation("TaskAssignedUser")
+  createdTasks             Task[]                   @relation("TaskCreatedBy")
   taskComments             TaskComment[]
-  taskAssignmentEvents      TaskAssignment[]      @relation("TaskAssignmentUser")
-  taskAssignmentsMadeBy      TaskAssignment[]      @relation("TaskAssignmentActor")
-  notifications             Notification[]
-  notificationPreferences   NotificationPreference[]
-  goals                     Goal[]
-  createdCalendarEvents     CalendarEvent[]
-  aiConversations           AiConversation[]
-  auditLogs                 AuditLog[]
-  refreshSessions           RefreshSession[]
-  passwordResetTokens       PasswordResetToken[]
-  uploadedDocuments         Document[]                @relation("DocumentUploadedBy")
-  uploadedDocumentVersions  DocumentVersion[]          @relation("DocumentVersionUploadedBy")
-  createdDocumentRequests   DocumentRequest[]          @relation("DocumentRequestCreatedBy")
-  assignedNotices           Notice[]                  @relation("NoticeAssignedUser")
-  createdNotices            Notice[]                  @relation("NoticeCreatedBy")
-  noticeComments            NoticeComment[]
-  assignedUdinRecords       UDINRecord[]               @relation("UdinAssignedUser")
-  createdUdinRecords        UDINRecord[]               @relation("UdinCreatedBy")
-  assignedGstReturns        GSTReturn[]                @relation("GstReturnAssignedUser")
-  createdGstReturns         GSTReturn[]                @relation("GstReturnCreatedBy")
-  assignedTdsReturns        TDSReturn[]                @relation("TdsReturnAssignedUser")
-  createdTdsReturns         TDSReturn[]                @relation("TdsReturnCreatedBy")
-  createdTdsChallans        TDSChallan[]               @relation("TdsChallanCreatedBy")
-  createdTdsCertificates    TDSCertificate[]           @relation("TdsCertificateCreatedBy")
-  createdAutomationRules    AutomationRule[]
+  taskAssignmentEvents     TaskAssignment[]         @relation("TaskAssignmentUser")
+  taskAssignmentsMadeBy    TaskAssignment[]         @relation("TaskAssignmentActor")
+  notifications            Notification[]
+  notificationPreferences  NotificationPreference[]
+  goals                    Goal[]
+  createdCalendarEvents    CalendarEvent[]
+  aiConversations          AiConversation[]
+  auditLogs                AuditLog[]
+  refreshSessions          RefreshSession[]
+  passwordResetTokens      PasswordResetToken[]
+  uploadedDocuments        Document[]               @relation("DocumentUploadedBy")
+  uploadedDocumentVersions DocumentVersion[]        @relation("DocumentVersionUploadedBy")
+  createdDocumentRequests  DocumentRequest[]        @relation("DocumentRequestCreatedBy")
+  assignedNotices          Notice[]                 @relation("NoticeAssignedUser")
+  createdNotices           Notice[]                 @relation("NoticeCreatedBy")
+  noticeComments           NoticeComment[]
+  assignedUdinRecords      UDINRecord[]             @relation("UdinAssignedUser")
+  createdUdinRecords       UDINRecord[]             @relation("UdinCreatedBy")
+  assignedGstReturns       GSTReturn[]              @relation("GstReturnAssignedUser")
+  createdGstReturns        GSTReturn[]              @relation("GstReturnCreatedBy")
+  assignedTdsReturns       TDSReturn[]              @relation("TdsReturnAssignedUser")
+  createdTdsReturns        TDSReturn[]              @relation("TdsReturnCreatedBy")
+  createdTdsChallans       TDSChallan[]             @relation("TdsChallanCreatedBy")
+  createdTdsCertificates   TDSCertificate[]         @relation("TdsCertificateCreatedBy")
+  createdAutomationRules   AutomationRule[]
+  assignedItrReturns       ITRReturn[]              @relation("ItrReturnAssignedUser")
+  reviewedItrReturns       ITRReturn[]              @relation("ItrReturnReviewer")
+  createdItrReturns        ITRReturn[]              @relation("ItrReturnCreatedBy")
+  assignedRocFilings       ROCFiling[]              @relation("RocFilingAssignedUser")
+  createdRocFilings        ROCFiling[]              @relation("RocFilingCreatedBy")
+  createdFeePlans          FeePlan[]                @relation("FeePlanCreatedBy")
+  createdInvoices          Invoice[]                @relation("InvoiceCreatedBy")
+  recordedPayments         Payment[]                @relation("PaymentRecordedBy")
+  attendanceRecords        Attendance[]             @relation("AttendanceUser")
+  markedAttendanceRecords  Attendance[]             @relation("AttendanceMarkedBy")
+  leaveRequests            LeaveRequest[]           @relation("LeaveRequestUser")
+  reviewedLeaveRequests    LeaveRequest[]           @relation("LeaveRequestReviewedBy")
+  knowledgeDocuments       KnowledgeDocument[]
+  taskTimeEntries          TaskTimeEntry[]
 
   @@index([organizationId])
   @@map("users")
@@ -216,29 +241,30 @@ enum ClientStatus {
 }
 
 model Client {
-  id             String       @id @default(cuid())
-  organizationId String
-  clientCode     String
-  displayName    String
-  legalName      String?
-  businessType   BusinessType @default(OTHER)
-  pan            String?
-  gstin          String?
-  tan            String?
-  email          String?
-  phone          String?
-  addressLine1   String?
-  addressLine2   String?
-  city           String?
-  state          String?
-  pincode        String?
-  status         ClientStatus @default(ACTIVE)
-  assignedUserId String?
+  id              String       @id @default(cuid())
+  organizationId  String
+  clientCode      String
+  displayName     String
+  legalName       String?
+  businessType    BusinessType @default(OTHER)
+  pan             String?
+  gstin           String?
+  tan             String?
+  cinOrLlpin      String?
+  email           String?
+  phone           String?
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  state           String?
+  pincode         String?
+  status          ClientStatus @default(ACTIVE)
+  assignedUserId  String?
   createdByUserId String
-  notes          String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  deletedAt      DateTime?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   assignedUser User?        @relation("ClientAssignedUser", fields: [assignedUserId], references: [id])
@@ -259,6 +285,11 @@ model Client {
   tdsReturns       TDSReturn[]
   tdsChallans      TDSChallan[]
   tdsCertificates  TDSCertificate[]
+  itrReturns       ITRReturn[]
+  rocFilings       ROCFiling[]
+  feePlans         FeePlan[]
+  invoices         Invoice[]
+  payments         Payment[]
 
   @@unique([organizationId, clientCode])
   @@unique([organizationId, pan])
@@ -346,27 +377,27 @@ enum TaskCategory {
 
 enum TemplateScope {
   PER_CLIENT // one task generated per applicable client
-  FIRM_WIDE  // one internal task for the firm, not tied to a client
+  FIRM_WIDE // one internal task for the firm, not tied to a client
 }
 
 model TaskTemplate {
-  id                    String          @id @default(cuid())
+  id                    String           @id @default(cuid())
   organizationId        String
   name                  String
   description           String?
-  category              TaskCategory    @default(CLIENT_SPECIFIC)
+  category              TaskCategory     @default(CLIENT_SPECIFIC)
   frequency             TaskFrequency
-  scope                 TemplateScope   @default(PER_CLIENT)
+  scope                 TemplateScope    @default(PER_CLIENT)
   applicableServiceType ServiceCategory?
-  defaultPriority       TaskPriority    @default(MEDIUM)
+  defaultPriority       TaskPriority     @default(MEDIUM)
   estimatedMinutes      Int?
-  checklistItems        Json            @default("[]") // string[] of checklist titles, in order
-  dueDayOfPeriod        Int?            // e.g. day-of-month for MONTHLY, day-of-year offset logic kept simple for MVP
-  leadDays              Int             @default(0) // generate task N days before due date
-  isActive              Boolean         @default(true)
+  checklistItems        Json             @default("[]") // string[] of checklist titles, in order
+  dueDayOfPeriod        Int? // e.g. day-of-month for MONTHLY, day-of-year offset logic kept simple for MVP
+  leadDays              Int              @default(0) // generate task N days before due date
+  isActive              Boolean          @default(true)
   createdByUserId       String
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   tasks        Task[]
@@ -391,39 +422,39 @@ enum TaskStatus {
 }
 
 model Task {
-  id                 String        @id @default(cuid())
-  organizationId     String
-  clientId           String?
-  templateId         String?
-  title              String
-  description        String?
-  category           TaskCategory  @default(CLIENT_SPECIFIC)
-  frequency          TaskFrequency @default(ONE_TIME)
-  priority           TaskPriority  @default(MEDIUM)
-  status             TaskStatus    @default(PENDING)
-  assignedUserId     String?
-  createdByUserId    String
-  dueDate            DateTime?
-  startDate          DateTime?
-  estimatedMinutes   Int?
-  actualMinutes      Int?
-  recurrencePeriodKey String?      // e.g. "2026-08" / "2026-Q3" / "2026" — dedupe key for recurring generation
-  reminderConfig     Json          @default("[]")
-  rescheduledFromId  String?
-  noticeId           String?       // many tasks can originate from one notice over its lifecycle
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  completedAt        DateTime?
-  deletedAt          DateTime?
+  id                  String        @id @default(cuid())
+  organizationId      String
+  clientId            String?
+  templateId          String?
+  title               String
+  description         String?
+  category            TaskCategory  @default(CLIENT_SPECIFIC)
+  frequency           TaskFrequency @default(ONE_TIME)
+  priority            TaskPriority  @default(MEDIUM)
+  status              TaskStatus    @default(PENDING)
+  assignedUserId      String?
+  createdByUserId     String
+  dueDate             DateTime?
+  startDate           DateTime?
+  estimatedMinutes    Int?
+  actualMinutes       Int?
+  recurrencePeriodKey String? // e.g. "2026-08" / "2026-Q3" / "2026" — dedupe key for recurring generation
+  reminderConfig      Json          @default("[]")
+  rescheduledFromId   String?
+  noticeId            String? // many tasks can originate from one notice over its lifecycle
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  completedAt         DateTime?
+  deletedAt           DateTime?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  client       Client?       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  template     TaskTemplate? @relation(fields: [templateId], references: [id])
-  assignedUser User?         @relation("TaskAssignedUser", fields: [assignedUserId], references: [id])
-  createdBy    User          @relation("TaskCreatedBy", fields: [createdByUserId], references: [id])
-  rescheduledFrom Task?      @relation("TaskReschedule", fields: [rescheduledFromId], references: [id])
-  rescheduledTo   Task[]     @relation("TaskReschedule")
-  notice          Notice?    @relation(fields: [noticeId], references: [id])
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client          Client?       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  template        TaskTemplate? @relation(fields: [templateId], references: [id])
+  assignedUser    User?         @relation("TaskAssignedUser", fields: [assignedUserId], references: [id])
+  createdBy       User          @relation("TaskCreatedBy", fields: [createdByUserId], references: [id])
+  rescheduledFrom Task?         @relation("TaskReschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo   Task[]        @relation("TaskReschedule")
+  notice          Notice?       @relation(fields: [noticeId], references: [id])
 
   checklistItems   TaskChecklistItem[]
   comments         TaskComment[]
@@ -431,6 +462,9 @@ model Task {
   complianceEvent  ComplianceEvent?
   gstReturn        GSTReturn?
   tdsReturn        TDSReturn?
+  itrReturn        ITRReturn?
+  rocFiling        ROCFiling?
+  timeEntries      TaskTimeEntry[]
 
   @@unique([organizationId, templateId, clientId, recurrencePeriodKey])
   @@index([organizationId, assignedUserId, status, dueDate])
@@ -507,22 +541,22 @@ enum ComplianceRuleStatus {
 }
 
 model ComplianceRule {
-  id             String               @id @default(cuid())
-  name           String
-  category       ServiceCategory
-  frequency      TaskFrequency
-  description    String?
-  dueDayOfPeriod Int                  // e.g. 20 => 20th of the applicable period
-  periodOffsetMonths Int              @default(0) // months to add before computing the period (e.g. GSTR-3B is for previous month)
+  id                    String               @id @default(cuid())
+  name                  String
+  category              ServiceCategory
+  frequency             TaskFrequency
+  description           String?
+  dueDayOfPeriod        Int // e.g. 20 => 20th of the applicable period
+  periodOffsetMonths    Int                  @default(0) // months to add before computing the period (e.g. GSTR-3B is for previous month)
   applicableServiceType ServiceCategory?
-  effectiveFrom  DateTime
-  effectiveTo    DateTime?
-  source         String?
-  sourceUrl      String?
-  verifiedAt     DateTime?
-  status         ComplianceRuleStatus @default(ACTIVE)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  effectiveFrom         DateTime
+  effectiveTo           DateTime?
+  source                String?
+  sourceUrl             String?
+  verifiedAt            DateTime?
+  status                ComplianceRuleStatus @default(ACTIVE)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
   complianceEvents ComplianceEvent[]
 
@@ -539,17 +573,17 @@ enum ComplianceEventStatus {
 }
 
 model ComplianceEvent {
-  id               String                 @id @default(cuid())
+  id               String                @id @default(cuid())
   organizationId   String
   clientId         String
   complianceRuleId String
-  taskId           String?                @unique
-  periodKey        String                 // e.g. "2026-08"
+  taskId           String?               @unique
+  periodKey        String // e.g. "2026-08"
   dueDate          DateTime
-  status           ComplianceEventStatus  @default(UPCOMING)
+  status           ComplianceEventStatus @default(UPCOMING)
   completedAt      DateTime?
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   client         Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -604,11 +638,13 @@ enum ReminderEntityType {
   NOTICE
   GST_RETURN
   TDS_RETURN
+  ITR_RETURN
+  ROC_FILING
 }
 
 enum ReminderChannel {
   IN_APP
-  EMAIL   // Phase 2: provider not wired yet
+  EMAIL // Phase 2: provider not wired yet
   WHATSAPP // Phase 2: provider not wired yet
 }
 
@@ -626,7 +662,7 @@ model Reminder {
   entityId       String
   userId         String
   channel        ReminderChannel    @default(IN_APP)
-  offsetLabel    String             // "7_DAYS_BEFORE" | "3_DAYS_BEFORE" | "1_DAY_BEFORE" | "DUE_TODAY" | "OVERDUE" | "CUSTOM"
+  offsetLabel    String // "7_DAYS_BEFORE" | "3_DAYS_BEFORE" | "1_DAY_BEFORE" | "DUE_TODAY" | "OVERDUE" | "CUSTOM"
   scheduledAt    DateTime
   status         ReminderStatus     @default(PENDING)
   retryCount     Int                @default(0)
@@ -708,7 +744,7 @@ enum GoalUnit {
 model Goal {
   id             String   @id @default(cuid())
   organizationId String
-  userId         String?  // null = firm-wide goal
+  userId         String? // null = firm-wide goal
   type           GoalType
   unit           GoalUnit @default(PERCENT)
   targetValue    Decimal  @db.Decimal(10, 2)
@@ -748,29 +784,66 @@ model AiConversation {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages     AiMessage[]
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       AiMessage[]
+  pendingActions AiPendingAction[]
 
   @@index([organizationId, userId])
   @@map("ai_conversations")
 }
 
 model AiMessage {
-  id             String           @id @default(cuid())
+  id             String          @id @default(cuid())
   conversationId String
   role           AiMessageRole
   content        String
   toolName       String?
   toolInput      Json?
   toolOutput     Json?
-  source         AiMessageSource  @default(TEXT)
-  createdAt      DateTime         @default(now())
+  source         AiMessageSource @default(TEXT)
+  createdAt      DateTime        @default(now())
 
   conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
   @@map("ai_messages")
+}
+
+// A write tool the model wants to call (create_task/create_followup) is
+// never executed inline — it is parked here as PENDING and only actually
+// runs once the user hits Confirm, which calls AiService.confirmAction.
+// This is the server-side enforcement of the confirm-before-write rule:
+// unlike a UI-only confirmation, a direct API call cannot skip this step,
+// because there is no code path that creates the underlying Task without
+// first flipping a PENDING row to CONFIRMED.
+enum AiPendingActionStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+model AiPendingAction {
+  id               String                @id @default(cuid())
+  organizationId   String
+  userId           String
+  conversationId   String
+  toolName         String
+  input            Json
+  summary          String
+  status           AiPendingActionStatus @default(PENDING)
+  createdAt        DateTime              @default(now())
+  expiresAt        DateTime
+  resolvedAt       DateTime?
+  resultEntityType String?
+  resultEntityId   String?
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, conversationId, status])
+  @@map("ai_pending_actions")
 }
 
 // ---------------------------------------------------------------------------
@@ -800,25 +873,25 @@ enum DocumentStatus {
 }
 
 model Document {
-  id             String           @id @default(cuid())
-  organizationId String
-  clientId       String?
-  category       DocumentCategory @default(OTHER)
-  title          String
-  description    String?
-  status         DocumentStatus   @default(ACTIVE)
+  id               String           @id @default(cuid())
+  organizationId   String
+  clientId         String?
+  category         DocumentCategory @default(OTHER)
+  title            String
+  description      String?
+  status           DocumentStatus   @default(ACTIVE)
   uploadedByUserId String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  deletedAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   client       Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   uploadedBy   User         @relation("DocumentUploadedBy", fields: [uploadedByUserId], references: [id])
 
-  versions      DocumentVersion[]
-  requestItems  DocumentRequestItem[]
-  noticeLinks   NoticeDocument[]
+  versions     DocumentVersion[]
+  requestItems DocumentRequestItem[]
+  noticeLinks  NoticeDocument[]
 
   @@index([organizationId, clientId, status])
   @@index([organizationId, category])
@@ -884,16 +957,16 @@ model DocumentRequest {
 }
 
 model DocumentRequestItem {
-  id                String                     @id @default(cuid())
+  id                String                    @id @default(cuid())
   documentRequestId String
   organizationId    String
   label             String
-  isRequired        Boolean                    @default(true)
-  status            DocumentRequestItemStatus  @default(PENDING)
+  isRequired        Boolean                   @default(true)
+  status            DocumentRequestItemStatus @default(PENDING)
   documentId        String?
   notes             String?
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
 
   documentRequest DocumentRequest @relation(fields: [documentRequestId], references: [id], onDelete: Cascade)
   document        Document?       @relation(fields: [documentId], references: [id], onDelete: SetNull)
@@ -919,7 +992,7 @@ enum NoticeStatus {
 }
 
 model Notice {
-  id               String        @id @default(cuid())
+  id               String          @id @default(cuid())
   organizationId   String
   clientId         String
   department       ServiceCategory @default(OTHER)
@@ -928,12 +1001,12 @@ model Notice {
   noticeDate       DateTime
   responseDeadline DateTime?
   assignedUserId   String?
-  priority         TaskPriority  @default(MEDIUM)
-  status           NoticeStatus  @default(NEW)
+  priority         TaskPriority    @default(MEDIUM)
+  status           NoticeStatus    @default(NEW)
   description      String?
   createdByUserId  String
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   closedAt         DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -965,7 +1038,9 @@ model NoticeComment {
   @@map("notice_comments")
 }
 
-/** Links an already-uploaded Document to a Notice (many-to-many via join row, mirrors DocumentRequestItem's linking style). */
+/**
+ * Links an already-uploaded Document to a Notice (many-to-many via join row, mirrors DocumentRequestItem's linking style).
+ */
 model NoticeDocument {
   id             String   @id @default(cuid())
   noticeId       String
@@ -1081,7 +1156,7 @@ model GSTReturn {
   gstProfileId    String
   clientId        String
   returnType      GstReturnType
-  taxPeriod       String               // e.g. "2026-08"
+  taxPeriod       String // e.g. "2026-08"
   dueDate         DateTime
   status          ComplianceWorkStatus @default(UPCOMING)
   assignedUserId  String?
@@ -1155,7 +1230,7 @@ model TDSReturn {
   tdsProfileId    String
   clientId        String
   returnType      TdsReturnType
-  quarter         String               // e.g. "Q1-2026-27"
+  quarter         String // e.g. "Q1-2026-27"
   dueDate         DateTime
   status          ComplianceWorkStatus @default(UPCOMING)
   assignedUserId  String?
@@ -1226,6 +1301,406 @@ model TDSCertificate {
 }
 
 // ---------------------------------------------------------------------------
+// Income Tax Returns (ITR) — internal deadline/status/document tracking only,
+// same scope as GST/TDS above: no government portal filing integration.
+// Unlike GST (GSTIN) and TDS (TAN), PAN is 1:1 with a Client already (no
+// multi-registration case), so there is no separate ITRProfile join model —
+// ITRReturn references Client directly and reads client.pan.
+// ---------------------------------------------------------------------------
+
+enum ItrFormType {
+  ITR_1
+  ITR_2
+  ITR_3
+  ITR_4
+  ITR_5
+  ITR_6
+  ITR_7
+  OTHER
+}
+
+enum ItrReturnStatus {
+  DATA_COLLECTION
+  PREPARATION
+  REVIEW
+  CLIENT_APPROVAL
+  FILED
+  VERIFICATION
+  COMPLETED
+  DEMAND
+  REFUND
+}
+
+model ITRReturn {
+  id                    String          @id @default(cuid())
+  organizationId        String
+  clientId              String
+  assessmentYear        String // e.g. "2026-27"
+  formType              ItrFormType
+  status                ItrReturnStatus @default(DATA_COLLECTION)
+  acknowledgementNumber String?
+  refundAmount          Decimal?        @db.Decimal(14, 2)
+  demandAmount          Decimal?        @db.Decimal(14, 2)
+  dueDate               DateTime
+  filingDate            DateTime?
+  assignedUserId        String?
+  reviewerUserId        String?
+  taskId                String?         @unique
+  notes                 String?
+  createdByUserId       String
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  completedAt           DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedUser User?        @relation("ItrReturnAssignedUser", fields: [assignedUserId], references: [id])
+  reviewer     User?        @relation("ItrReturnReviewer", fields: [reviewerUserId], references: [id])
+  createdBy    User         @relation("ItrReturnCreatedBy", fields: [createdByUserId], references: [id])
+  task         Task?        @relation(fields: [taskId], references: [id])
+
+  @@unique([organizationId, clientId, assessmentYear, formType])
+  @@index([organizationId, clientId, status])
+  @@map("itr_returns")
+}
+
+enum RocFormType {
+  AOC_4 // financial statements
+  MGT_7 // annual return (company)
+  MGT_7A // annual return (small company / OPC)
+  ADT_1 // auditor appointment
+  DIR_3_KYC
+  DIR_12 // change in directors
+  DPT_3 // return of deposits
+  INC_20A // commencement of business
+  PAS_3 // return of allotment
+  LLP_FORM_8 // LLP statement of account & solvency
+  LLP_FORM_11 // LLP annual return
+  OTHER
+}
+
+model ROCFiling {
+  id              String               @id @default(cuid())
+  organizationId  String
+  clientId        String
+  formType        RocFormType
+  financialYear   String // e.g. "2025-26"
+  dueDate         DateTime
+  filingDate      DateTime?
+  srn             String? // SRN / acknowledgement reference once filed
+  status          ComplianceWorkStatus @default(UPCOMING)
+  assignedUserId  String?
+  taskId          String?              @unique
+  notes           String?
+  createdByUserId String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  completedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedUser User?        @relation("RocFilingAssignedUser", fields: [assignedUserId], references: [id])
+  createdBy    User         @relation("RocFilingCreatedBy", fields: [createdByUserId], references: [id])
+  task         Task?        @relation(fields: [taskId], references: [id])
+
+  @@unique([organizationId, clientId, formType, financialYear])
+  @@index([organizationId, clientId, status])
+  @@index([organizationId, dueDate, status])
+  @@map("roc_filings")
+}
+
+// ---------------------------------------------------------------------------
+// Billing (Fee Plans / Invoices / Payments). Internal record-keeping only —
+// no payment gateway integration. "Overdue" is intentionally not a stored
+// status: it's derived on read from dueDate + status so it can never go
+// stale without a cron job.
+// ---------------------------------------------------------------------------
+
+enum FeeFrequency {
+  ONE_TIME
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  ANNUALLY
+}
+
+model FeePlan {
+  id              String       @id @default(cuid())
+  organizationId  String
+  clientId        String
+  name            String
+  amount          Decimal      @db.Decimal(12, 2)
+  frequency       FeeFrequency @default(ONE_TIME)
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean      @default(true)
+  notes           String?
+  createdByUserId String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("FeePlanCreatedBy", fields: [createdByUserId], references: [id])
+  invoices     Invoice[]
+
+  @@index([organizationId, clientId, isActive])
+  @@map("fee_plans")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  organizationId  String
+  clientId        String
+  feePlanId       String?
+  invoiceNumber   String
+  status          InvoiceStatus @default(DRAFT)
+  issueDate       DateTime
+  dueDate         DateTime
+  subtotal        Decimal       @db.Decimal(12, 2)
+  taxAmount       Decimal       @default(0) @db.Decimal(12, 2)
+  totalAmount     Decimal       @db.Decimal(12, 2)
+  amountPaid      Decimal       @default(0) @db.Decimal(12, 2)
+  notes           String?
+  createdByUserId String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  feePlan      FeePlan?          @relation(fields: [feePlanId], references: [id])
+  createdBy    User              @relation("InvoiceCreatedBy", fields: [createdByUserId], references: [id])
+  lineItems    InvoiceLineItem[]
+  payments     Payment[]
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId, clientId, status])
+  @@index([organizationId, dueDate, status])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  amount      Decimal @db.Decimal(12, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_line_items")
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  UPI
+  CHEQUE
+  CARD
+  OTHER
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  organizationId   String
+  clientId         String
+  invoiceId        String
+  amount           Decimal       @db.Decimal(12, 2)
+  paymentDate      DateTime
+  method           PaymentMethod
+  referenceNumber  String?
+  notes            String?
+  recordedByUserId String
+  createdAt        DateTime      @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  recordedBy   User         @relation("PaymentRecordedBy", fields: [recordedByUserId], references: [id])
+
+  @@index([organizationId, clientId])
+  @@index([organizationId, invoiceId])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// Attendance. Every staff member checks themselves in/out (no permission
+// beyond attendance.view, granted to every staff role — the whole point is
+// daily self-service); attendance.manage is only needed to mark or correct
+// someone ELSE's record. "date" is stored as midnight UTC of the calendar
+// day, matching this codebase's existing UTC-based date convention (see
+// docs/STATUS.md "Known simplifications") rather than a true DATE column.
+// ---------------------------------------------------------------------------
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  ON_LEAVE
+  HOLIDAY
+  WEEK_OFF
+}
+
+model Attendance {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  date           DateTime
+  status         AttendanceStatus @default(PRESENT)
+  checkInAt      DateTime?
+  checkOutAt     DateTime?
+  workedMinutes  Int?
+  notes          String?
+  markedByUserId String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation("AttendanceUser", fields: [userId], references: [id], onDelete: Cascade)
+  markedBy     User         @relation("AttendanceMarkedBy", fields: [markedByUserId], references: [id])
+
+  @@unique([organizationId, userId, date])
+  @@index([organizationId, date])
+  @@map("attendance_records")
+}
+
+// ---------------------------------------------------------------------------
+// Leave management. Tracks requests and approvals only — there is no
+// firm-configurable leave policy (entitlement/accrual/carry-forward) in this
+// schema, so no balance is computed or invented; approving a request marks
+// the covered dates ON_LEAVE on the requester's Attendance record, the same
+// "everything connects" pattern used by task-linking elsewhere.
+// ---------------------------------------------------------------------------
+
+enum LeaveType {
+  CASUAL
+  SICK
+  EARNED
+  UNPAID
+  OTHER
+}
+
+enum LeaveRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model LeaveRequest {
+  id               String             @id @default(cuid())
+  organizationId   String
+  userId           String
+  leaveType        LeaveType
+  startDate        DateTime
+  endDate          DateTime
+  days             Decimal            @db.Decimal(4, 1)
+  reason           String?
+  status           LeaveRequestStatus @default(PENDING)
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  reviewNotes      String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation("LeaveRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy   User?        @relation("LeaveRequestReviewedBy", fields: [reviewedByUserId], references: [id])
+
+  @@index([organizationId, userId, status])
+  @@index([organizationId, status])
+  @@map("leave_requests")
+}
+
+// ---------------------------------------------------------------------------
+// Knowledge base (RAG foundation). Real embeddings via the Gemini embedding
+// API — never fabricated vectors. Similarity search is application-level
+// cosine similarity over a `Float[]` column, not a native pgvector index:
+// this environment's Postgres image (postgres:16-alpine) doesn't have the
+// pgvector extension, and swapping the Docker image is a real infra change
+// outside this pass's scope. Fine at the data volumes a firm's internal
+// knowledge base actually reaches — see docs/STATUS.md for the upgrade path.
+// ---------------------------------------------------------------------------
+
+enum KnowledgeDocumentStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+model KnowledgeDocument {
+  id              String                  @id @default(cuid())
+  organizationId  String
+  title           String
+  content         String
+  status          KnowledgeDocumentStatus @default(PROCESSING)
+  errorMessage    String?
+  createdByUserId String
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User             @relation(fields: [createdByUserId], references: [id])
+  chunks       KnowledgeChunk[]
+
+  @@index([organizationId])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  knowledgeDocumentId String
+  chunkIndex          Int
+  content             String
+  embedding           Float[]
+  createdAt           DateTime @default(now())
+
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  knowledgeDocument KnowledgeDocument @relation(fields: [knowledgeDocumentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, knowledgeDocumentId])
+  @@map("knowledge_chunks")
+}
+
+// ---------------------------------------------------------------------------
+// Task time tracking. Persisted server-side from the moment a timer starts
+// — unlike the old Focus Mode page (pure client React state), a running
+// timer survives a page refresh or browser crash because startedAt lives in
+// the database, not just in memory. Task.actualMinutes accumulates the sum
+// of every stopped entry's duration, rather than being overwritten once at
+// completion time.
+// ---------------------------------------------------------------------------
+
+model TaskTimeEntry {
+  id              String    @id @default(cuid())
+  organizationId  String
+  taskId          String
+  userId          String
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationMinutes Int?
+  createdAt       DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  task         Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, taskId])
+  @@index([organizationId, userId, endedAt])
+  @@map("task_time_entries")
+}
+
+// ---------------------------------------------------------------------------
 // Automations (real trigger evaluation via the existing @nestjs/schedule cron
 // infrastructure — see apps/api/src/automations. Actions are limited to what
 // this system can actually do today: in-app notifications and task creation.
@@ -1270,7 +1745,9 @@ model AutomationRule {
   @@map("automation_rules")
 }
 
-/** One row per (rule, triggering entity) — the unique constraint IS the idempotency/duplicate-protection mechanism: a rule can fire at most once per entity, ever. */
+/**
+ * One row per (rule, triggering entity) — the unique constraint IS the idempotency/duplicate-protection mechanism: a rule can fire at most once per entity, ever.
+ */
 model AutomationExecution {
   id                String                    @id @default(cuid())
   organizationId    String
@@ -1303,8 +1780,11 @@ model AuditLog {
   action         String
   entityType     String?
   entityId       String?
+  beforeValue    Json?
+  afterValue     Json?
   metadata       Json?
   ipAddress      String?
+  userAgent      String?
   createdAt      DateTime @default(now())
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)

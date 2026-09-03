@@ -35,9 +35,18 @@ const PERMISSIONS: Array<{ key: string; category: string; description: string }>
     category: 'documents',
     description: 'Create/edit document requests and fulfill checklist items',
   },
-  // Payments (Phase 2 module; permission reserved now)
-  { key: 'payments.view', category: 'payments', description: 'View payments/invoices' },
-  { key: 'payments.create', category: 'payments', description: 'Create payments/invoices' },
+  // Billing (fee plans, invoices, payments)
+  { key: 'payments.view', category: 'payments', description: 'View fee plans, invoices, and payments' },
+  { key: 'payments.manage', category: 'payments', description: 'Create/edit fee plans, invoices, and payments' },
+  // Attendance
+  { key: 'attendance.view', category: 'attendance', description: 'View attendance and check yourself in/out' },
+  { key: 'attendance.manage', category: 'attendance', description: "Mark or correct another team member's attendance" },
+  // Leave
+  { key: 'leave.view', category: 'leave', description: 'View and request leave' },
+  { key: 'leave.manage', category: 'leave', description: "Approve or reject another team member's leave requests" },
+  // Knowledge base
+  { key: 'knowledge.view', category: 'knowledge', description: 'View and search the firm knowledge base' },
+  { key: 'knowledge.manage', category: 'knowledge', description: 'Create/edit/delete knowledge base documents' },
   // Reports
   { key: 'reports.view', category: 'reports', description: 'View and export reports' },
   // AI
@@ -62,6 +71,12 @@ const PERMISSIONS: Array<{ key: string; category: string; description: string }>
   // TDS
   { key: 'tds.view', category: 'tds', description: 'View TDS profiles, returns, challans, certificates' },
   { key: 'tds.manage', category: 'tds', description: 'Create/edit TDS profiles, returns, challans, certificates' },
+  // ITR
+  { key: 'itr.view', category: 'itr', description: 'View ITR returns' },
+  { key: 'itr.manage', category: 'itr', description: 'Create/edit ITR returns' },
+  // ROC/MCA
+  { key: 'roc.view', category: 'roc', description: 'View ROC/MCA filings' },
+  { key: 'roc.manage', category: 'roc', description: 'Create/edit ROC/MCA filings' },
   // Automations
   { key: 'automations.view', category: 'automations', description: 'View automation rules and execution history' },
   { key: 'automations.manage', category: 'automations', description: 'Create/edit/enable/pause automation rules' },
@@ -100,7 +115,10 @@ const ROLES: Array<{
       'task_templates.manage',
       'documents.view', 'documents.upload', 'documents.edit', 'documents.delete',
       'document_requests.view', 'document_requests.manage',
-      'payments.view',
+      'payments.view', 'payments.manage',
+      'attendance.view', 'attendance.manage',
+      'leave.view', 'leave.manage',
+      'knowledge.view', 'knowledge.manage',
       'reports.view',
       'ai.use', 'ai.actions',
       'compliance.manage',
@@ -111,6 +129,8 @@ const ROLES: Array<{
       'udin.view', 'udin.manage',
       'gst.view', 'gst.manage',
       'tds.view', 'tds.manage',
+      'itr.view', 'itr.manage',
+      'roc.view', 'roc.manage',
       'automations.view', 'automations.manage',
       'team.manage',
     ],
@@ -124,6 +144,10 @@ const ROLES: Array<{
       'tasks.view', 'tasks.edit', 'tasks.complete',
       'documents.view', 'documents.upload', 'documents.edit',
       'document_requests.view',
+      'payments.view', 'payments.manage',
+      'attendance.view',
+      'leave.view',
+      'knowledge.view', 'knowledge.manage',
       'reports.view',
       'ai.use', 'ai.actions',
       'calendar.manage',
@@ -133,6 +157,8 @@ const ROLES: Array<{
       'udin.view', 'udin.manage',
       'gst.view', 'gst.manage',
       'tds.view', 'tds.manage',
+      'itr.view', 'itr.manage',
+      'roc.view', 'roc.manage',
     ],
   },
   {
@@ -144,12 +170,18 @@ const ROLES: Array<{
       'tasks.view', 'tasks.complete',
       'documents.view', 'documents.upload',
       'document_requests.view',
+      'payments.view',
+      'attendance.view',
+      'leave.view',
+      'knowledge.view',
       'ai.use',
       'notifications.manage',
       'notices.view',
       'udin.view',
       'gst.view',
       'tds.view',
+      'itr.view',
+      'roc.view',
     ],
   },
   {

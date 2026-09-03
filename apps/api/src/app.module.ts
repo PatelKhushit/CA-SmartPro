@@ -29,6 +29,12 @@ import { NoticesModule } from './notices/notices.module.js';
 import { UdinModule } from './udin/udin.module.js';
 import { GstModule } from './gst/gst.module.js';
 import { TdsModule } from './tds/tds.module.js';
+import { ItrModule } from './itr/itr.module.js';
+import { RocModule } from './roc/roc.module.js';
+import { BillingModule } from './billing/billing.module.js';
+import { AttendanceModule } from './attendance/attendance.module.js';
+import { LeaveModule } from './leave/leave.module.js';
+import { KnowledgeModule } from './knowledge/knowledge.module.js';
 import { TeamModule } from './team/team.module.js';
 import { AutomationsModule } from './automations/automations.module.js';
 import { NewsModule } from './news/news.module.js';
@@ -66,6 +72,12 @@ import { SearchModule } from './search/search.module.js';
     UdinModule,
     GstModule,
     TdsModule,
+    ItrModule,
+    RocModule,
+    BillingModule,
+    AttendanceModule,
+    LeaveModule,
+    KnowledgeModule,
     TeamModule,
     AutomationsModule,
     NewsModule,

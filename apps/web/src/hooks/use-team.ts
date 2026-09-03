@@ -36,8 +36,12 @@ export function useTeamSummary() {
   return useQuery({ queryKey: ["team", "summary"], queryFn: () => api.get<TeamSummary>("/team/summary") });
 }
 
-export function useTeamMembers() {
-  return useQuery({ queryKey: ["team"], queryFn: () => api.get<TeamMember[]>("/team") });
+export function useTeamMembers(options: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: ["team"],
+    queryFn: () => api.get<TeamMember[]>("/team"),
+    enabled: options.enabled ?? true,
+  });
 }
 
 export function useTeamRoles() {
