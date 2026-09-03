@@ -12,6 +12,8 @@ import { BusinessType } from '@prisma/client';
 const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 const TAN_REGEX = /^[A-Z]{4}[0-9]{5}[A-Z]$/;
+// CIN (21 chars, e.g. U12345MH2020PTC123456) or LLPIN (7 chars, e.g. AAA-1234) — kept permissive since the two formats differ.
+const CIN_OR_LLPIN_REGEX = /^[A-Z0-9-]{5,21}$/;
 
 export class CreateClientDto {
   @IsString()
@@ -42,6 +44,11 @@ export class CreateClientDto {
   @IsString()
   @Matches(TAN_REGEX, { message: 'TAN must look like ABCD12345E.' })
   tan?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(CIN_OR_LLPIN_REGEX, { message: 'CIN/LLPIN format looks invalid.' })
+  cinOrLlpin?: string;
 
   @IsOptional()
   @IsEmail()

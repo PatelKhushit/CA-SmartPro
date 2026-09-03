@@ -113,6 +113,7 @@ export default function ClientProfilePage() {
                 <InfoRow label="PAN" value={client.pan} />
                 <InfoRow label="GSTIN" value={client.gstin} />
                 <InfoRow label="TAN" value={client.tan} />
+                <InfoRow label="CIN / LLPIN" value={client.cinOrLlpin} />
               </CardContent>
             </Card>
 
