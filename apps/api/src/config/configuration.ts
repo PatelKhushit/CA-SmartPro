@@ -35,6 +35,7 @@ export default () => {
       provider: process.env.AI_PROVIDER ?? 'gemini',
       apiKey: process.env.AI_API_KEY ?? '',
       model: process.env.AI_MODEL ?? 'gemini-flash-latest',
+      embeddingModel: process.env.AI_EMBEDDING_MODEL ?? 'gemini-embedding-001',
     },
     storage: {
       // 'local' in every environment today; production deployments should
