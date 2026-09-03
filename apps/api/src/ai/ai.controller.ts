@@ -40,4 +40,16 @@ export class AiController {
   sendMessage(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: SendMessageDto) {
     return this.aiService.sendMessage(user, id, dto.text, dto.source);
   }
+
+  @RequirePermissions('ai.actions')
+  @Post('actions/:id/confirm')
+  confirmAction(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.aiService.confirmAction(user, id);
+  }
+
+  @RequirePermissions('ai.actions')
+  @Post('actions/:id/cancel')
+  cancelAction(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.aiService.cancelAction(user, id);
+  }
 }
